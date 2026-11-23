@@ -3,223 +3,130 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>יפוצו – אב טיפוס</title>
+<title>יפוצו</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --paper: #f3e9d0; --paper-2: #e8d9b4; --ink: #2a1d10; --ink-soft: #6b5638;
-    --gold: #c9962e; --gold-light: #f3d27a; --red: #9c3324; --green: #3f6b34;
-    --bg: #33261a; --line: #8a6a3a;
-  }
+  :root { --ink: #2a1d10; --ink-soft: #6b5638; --gold: #c9962e; --gold-light: #f3d27a; --red: #9c3324; --paper: #f3e6c4; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Frank Ruhl Libre", "David Libre", "David", Georgia, serif; font-size: 16px; }
-  button { font: inherit; font-weight: 700; color: var(--ink); background: linear-gradient(#f8ebc9, #ddc38d);
-    border: 2px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
-  button:hover:not(:disabled) { background: linear-gradient(#fff4d6, #e8cf99); }
-  button:disabled { opacity: 0.4; cursor: default; }
-  button.primary { background: linear-gradient(#f6d985, #c9962e); }
-  .card { background: var(--paper); border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px;
-    box-shadow: inset 0 0 28px rgba(120, 90, 40, 0.22); }
-  .small { font-size: 0.85em; color: var(--ink-soft); }
-  h2 { margin: 0 0 6px; font-size: 1em; color: var(--ink-soft); letter-spacing: 0.5px; }
+  html, body { margin: 0; height: 100%; background: #1d140c; overflow: hidden; }
+  body { font-family: "Frank Ruhl Libre", Georgia, serif; color: var(--ink); }
+  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  /* The whole game is one 1280x720 stage, scaled to fit the window. */
+  #stage { position: relative; width: 1280px; height: 720px; transform-origin: center; flex: none; user-select: none; }
+  #scene, #map { position: absolute; }
+  #scene { inset: 0; }
+  #map { left: 700px; top: 118px; width: 500px; height: 470px; }
 
-  /* top bar */
-  #top { max-width: 1240px; margin: 10px auto 0; padding: 0 12px; display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
-  #brand { display: flex; align-items: center; gap: 10px; }
-  #brand b { font-size: 1.7em; color: var(--red); }
-  #stats { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-weight: 700; }
-  #stats span b { color: var(--red); font-size: 1.1em; }
-  #steps { flex: 1; display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap; }
-  #steps span { padding: 4px 9px; border-radius: 14px; background: var(--paper-2); color: var(--ink-soft); font-size: 0.85em; font-weight: 700; border: 1px solid transparent; }
-  #steps span.done { background: #d9c9a0; color: var(--ink); }
-  #steps span.now { background: var(--gold-light); color: var(--ink); border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,150,46,.35); }
+  button { font: inherit; font-weight: 700; color: var(--ink); cursor: pointer; border: 0; background: none; }
 
-  /* main layout: right = map, middle = heart, left = the Jew and instructions (RTL order) */
-  #app { max-width: 1240px; margin: 10px auto; padding: 0 12px 12px; display: grid; gap: 10px;
-    grid-template-columns: 520px 250px 1fr; grid-template-areas: "map heart side" "inv inv side"; }
-  #map-card { grid-area: map; text-align: center; }
-  #heart-card { grid-area: heart; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  #side { grid-area: side; display: flex; flex-direction: column; gap: 10px; }
-  #inv { grid-area: inv; }
-  #map { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 4px; }
-  #map-legend { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
-  #map-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; margin-inline-end: 4px; }
+  /* speech bubble */
+  #bubble { position: absolute; left: 70px; top: 118px; width: 500px; min-height: 84px; padding: 14px 20px;
+    background: #fffaf0; border: 3px solid #5a3e1e; border-radius: 22px; font-size: 25px; line-height: 1.35;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.18); transition: opacity .25s; }
+  #bubble::after { content: ""; position: absolute; bottom: -22px; right: 120px; border: 12px solid transparent; border-top: 14px solid #5a3e1e; }
+  #bubble .who { display: block; font-size: 17px; color: var(--red); font-weight: 900; margin-bottom: 2px; }
+  #hints { position: absolute; left: 70px; top: 28px; display: flex; gap: 6px; }
+  #hints span { background: rgba(255, 250, 240, 0.92); border: 2px solid #8a6a3a; border-radius: 14px; padding: 2px 12px; font-size: 17px; font-weight: 700; }
 
-  /* the visitor */
-  #jew { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: start; }
-  #jew-face { width: 56px; height: 56px; border-radius: 50%; background: #e3cf9f; border: 2px solid var(--line);
-    display: flex; align-items: center; justify-content: center; font-size: 1.6em; font-weight: 700; color: var(--ink-soft); }
-  #jew-name { font-size: 1.15em; font-weight: 700; }
-  #jew-trait { color: var(--ink-soft); font-size: 0.9em; }
-  #bubble { position: relative; margin-top: 8px; background: #fffaf0; border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 1.1em; }
-  #bubble::before { content: ""; position: absolute; top: -9px; right: 18px; border: 8px solid transparent; border-bottom-color: var(--line); border-top: 0; }
-  #hints { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  #hints span { background: var(--paper-2); border-radius: 12px; padding: 2px 9px; font-size: 0.9em; font-weight: 700; }
-  #jew-meta { margin-top: 6px; }
+  /* the one bar where the player acts */
+  #bar { position: absolute; left: 0; right: 0; bottom: 0; height: 132px; display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 0 24px; background: linear-gradient(#6b4524, #4a2f17); border-top: 4px solid #2e1c0c; }
+  .card { width: 150px; height: 104px; background: var(--paper); border: 3px solid #8a6a3a; border-radius: 10px; padding: 6px 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative;
+    box-shadow: 0 4px 0 #2e1c0c; transition: transform .12s, box-shadow .12s; }
+  .card:hover:not(.off) { transform: translateY(-5px); box-shadow: 0 9px 0 #2e1c0c; }
+  .card.off { opacity: 0.4; cursor: default; }
+  .card .big { font-size: 36px; line-height: 1; color: var(--red); font-weight: 900; }
+  .card .nm { font-size: 21px; font-weight: 900; }
+  .card .sub { font-size: 14px; color: var(--ink-soft); line-height: 1.2; }
+  .card .count { position: absolute; top: 4px; left: 8px; font-size: 14px; color: var(--ink-soft); font-weight: 700; }
+  .card .ring { position: absolute; inset: -3px; border-radius: 10px; pointer-events: none; }
+  .card.wide { width: 330px; font-size: 19px; }
+  .card.hanhaga { width: 190px; }
+  .action { height: 96px; padding: 0 34px; border-radius: 48px; font-size: 27px; font-weight: 900; color: #2a1d10;
+    background: radial-gradient(circle at 50% 30%, #ffe9a6, #c9962e); border: 3px solid #6b4524; box-shadow: 0 5px 0 #2e1c0c; }
+  .action:disabled { filter: grayscale(.7); opacity: .5; cursor: default; }
+  .action small { display: block; font-size: 15px; font-weight: 700; }
+  .tool { width: 92px; height: 96px; border-radius: 12px; background: #e6d5ad; border: 3px solid #8a6a3a; font-size: 15px; box-shadow: 0 4px 0 #2e1c0c; }
+  .tool b { display: block; font-size: 30px; }
+  .tool:disabled { opacity: .4; cursor: default; }
 
-  /* "what now" box */
-  #coach { border-color: var(--gold); background: #fbf1d4; }
-  #coach-who { font-weight: 700; color: var(--red); font-size: 0.85em; }
-  #coach-text { font-size: 1.12em; font-weight: 700; margin: 2px 0 0; line-height: 1.45; }
-  #msg { min-height: 1.4em; font-weight: 700; margin-top: 6px; color: var(--green); }
-  #msg.bad { color: var(--red); }
-  #choices { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-  #choices button { text-align: start; }
-  #choices button .why { display: block; font-weight: 400; font-size: 0.85em; color: var(--ink-soft); }
+  /* coach (ר' בערל) */
+  #coach { position: absolute; left: 160px; top: 232px; width: 250px; padding: 10px 16px; background: #fbf0d0;
+    border: 3px dashed var(--gold); border-radius: 12px; font-size: 19px; font-weight: 700; line-height: 1.4; }
+  #coach .who { color: var(--red); font-size: 15px; display: block; }
+  #coach.hidden { display: none; }
+  .focus { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px var(--gold), 0 4px 0 #2e1c0c; } 50% { box-shadow: 0 0 0 10px rgba(243,210,122,.9), 0 4px 0 #2e1c0c; } }
 
-  /* heart and tools */
-  #heart { cursor: pointer; touch-action: none; }
-  #dist { font-weight: 700; }
-  #dist.ok { color: var(--green); }
-  #tools { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
-  #tools button { padding: 8px 6px; }
-  #tools .wide { grid-column: 1 / -1; }
-  #beats { display: flex; gap: 10px; justify-content: center; min-height: 26px; }
-  #beats span { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ink-soft); background: #eadcb8; transition: transform .08s; }
-  #beats span.now { transform: scale(1.35); background: var(--gold-light); border-color: var(--gold); }
-  #beats span.hit { background: var(--gold); }
-  #beats span.miss { background: #b9a88a; }
-  #beats.off { visibility: hidden; }
+  /* top-left status */
+  #status { position: absolute; right: 14px; top: 8px; display: flex; gap: 10px; font-size: 18px; font-weight: 900; color: #f6e7c3; text-shadow: 0 2px 0 #000; }
+  #status span { background: rgba(30, 20, 10, 0.55); padding: 3px 12px; border-radius: 14px; }
+  #msg { position: absolute; left: 700px; top: 592px; width: 500px; text-align: center; font-size: 20px; font-weight: 900; color: #fff3d0; text-shadow: 0 2px 0 #000; min-height: 26px; }
 
-  /* inventory */
-  #inv-list { display: flex; gap: 8px; flex-wrap: wrap; }
-  .concept { width: 150px; padding: 7px 8px; border: 2px solid var(--line); border-radius: 8px; background: #fbf3df;
-    user-select: none; cursor: pointer; position: relative; transition: transform .1s; }
-  .concept:hover { transform: translateY(-2px); }
-  .concept.sel { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-light); }
-  .concept.empty { opacity: 0.45; }
-  .concept .top { display: flex; justify-content: space-between; align-items: baseline; }
-  .concept .nm { font-weight: 700; font-size: 1.1em; }
-  .concept .arrow { font-size: 1.3em; color: var(--red); }
-  .concept .meta { font-size: 0.8em; color: var(--ink-soft); line-height: 1.35; }
-  .concept .depth { height: 8px; background: #d8c69c; border-radius: 4px; margin-top: 5px; overflow: hidden; }
-  .concept .depth i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), var(--red)); }
-  .concept .buy { font-size: 0.75em; padding: 1px 6px; margin-top: 4px; }
-
-  /* the tutorial's pointer: a pulsing gold outline on what to touch now */
-  .focus { animation: pulse 1.1s ease-in-out infinite; position: relative; z-index: 2; }
-  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 3px var(--gold); } 50% { box-shadow: 0 0 0 7px rgba(243, 210, 122, 0.85); } }
-
-  #overlay { position: fixed; inset: 0; background: rgba(30, 20, 10, 0.72); display: flex; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
-  #overlay.hidden { display: none; }
-  #overlay .card { max-width: 500px; text-align: center; font-size: 1.08em; line-height: 1.55; }
-  #overlay ol { text-align: start; padding-inline-start: 1.3em; margin: 6px 0; }
-
-  @media (max-width: 1180px) {
-    #app { grid-template-columns: 1fr 250px; grid-template-areas: "map side" "heart side" "inv inv"; }
-    #heart-card { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-  }
-  @media (max-width: 820px) {
-    #app { grid-template-columns: 1fr; grid-template-areas: "side" "map" "heart" "inv"; }
-  }
+  /* modal */
+  #modal { position: absolute; inset: 0; background: rgba(20, 12, 6, 0.72); display: flex; align-items: center; justify-content: center; z-index: 5; }
+  #modal.hidden { display: none; }
+  #modal .sheet { width: 620px; max-height: 640px; overflow: auto; background: var(--paper); border: 4px solid #6b4524; border-radius: 14px; padding: 22px 28px;
+    text-align: center; font-size: 21px; line-height: 1.5; box-shadow: 0 12px 0 rgba(0,0,0,.35); }
+  #modal h1 { margin: 0 0 6px; color: var(--red); font-size: 40px; font-weight: 900; }
+  #modal h2 { margin: 0 0 6px; color: var(--red); font-size: 30px; }
+  #modal ol { text-align: start; margin: 8px 0; }
+  #modal .row { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .btn { padding: 10px 26px; border-radius: 26px; font-size: 22px; background: radial-gradient(circle at 50% 30%, #ffe9a6, #c9962e); border: 3px solid #6b4524; box-shadow: 0 4px 0 #2e1c0c; }
+  .btn.plain { background: #e6d5ad; }
+  .shop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+  .shop .card { width: auto; height: 128px; cursor: default; }
+  .shop .card:hover { transform: none; }
+  .shop .card button { margin-top: 4px; padding: 2px 10px; border-radius: 12px; background: #e6c66e; border: 2px solid #8a6a3a; font-size: 15px; }
+  .shop .card button:disabled { opacity: .4; }
+  .big-num { font-size: 46px; font-weight: 900; color: var(--red); }
 </style>
 </head>
 <body>
-<header id="top">
-  <div id="brand" class="card"><b>יפוצו</b><span class="small">אב טיפוס · מפת המעשה</span></div>
-  <div id="stats" class="card">
-    <span>יום <b id="st-day">1</b></span>
-    <span title="תרומות לבית חב&quot;ד: קונים בהן מושגים">תרומות <b id="st-coins">0</b> ת'</span>
-    <span title="אמון הקהילה, 1 עד 10">אמון <b id="st-trust">3</b></span>
-    <span title="נקודות עבודה">עבודה <b id="st-xp">0</b></span>
-  </div>
-  <div id="steps" class="card" aria-label="שלבי המענה">
-    <span data-step="read">1 קריאת המצב</span>
-    <span data-step="concept">2 בחירת מושג</span>
-    <span data-step="heart">3 הכנסה ללב</span>
-    <span data-step="talk">4 שיחה</span>
-    <span data-step="nigun">5 ניגון</span>
-    <span data-step="persuade">6 הנקודה שבלב</span>
-  </div>
-</header>
-
-<main id="app">
-  <section id="map-card" class="card">
-    <h2>מפת הנפש · מפת המעשה</h2>
-    <canvas id="map" width="500" height="500" aria-label="מפת המעשה"></canvas>
-    <div id="map-legend" class="small">
-      <span><i style="background:#f0a030"></i>הנר</span>
-      <span><i style="background:#c9962e"></i>ההנהגה שבחרתם</span>
-      <span><i style="background:#2c1616"></i>קליפה שהורסת</span>
-      <span><i style="background:#5a4a7a"></i>קליפה שמאטה</span>
-      <span>✦ הנקודה היהודית</span>
-    </div>
-  </section>
-
-  <section id="heart-card" class="card">
-    <h2>הלב</h2>
-    <canvas id="heart" width="210" height="210" aria-label="הלב"></canvas>
-    <div id="dist" class="small"></div>
-    <div id="tools">
-      <button id="btn-talk" class="wide" title="מחזיקים לחוץ, או מסובבים את העכבר סביב הלב">🗨 מחזיקים כדי לדבר</button>
-      <button id="btn-simple" title="מחזיקים: מושך את הנר לכיוון הנקודה היהודית שבמרכז">💧 פשטות <span id="simple-left">3.0</span></button>
-      <button id="btn-nigun" class="primary" disabled>🎵 ניגון</button>
-      <button id="btn-giveup" class="wide small">לשחרר אותו בינתיים</button>
-    </div>
-    <div id="beats" class="off"><span></span><span></span><span></span><span></span></div>
-  </section>
-
-  <section id="side">
-    <div class="card" id="jew-card">
-      <h2>נכנס לבית חב"ד</h2>
-      <div id="jew">
-        <div id="jew-face"></div>
-        <div><div id="jew-name"></div><div id="jew-trait"></div></div>
-      </div>
-      <div id="bubble"></div>
-      <div id="hints"></div>
-      <div id="jew-meta" class="small"></div>
-    </div>
-    <div class="card" id="coach">
-      <div id="coach-who"></div>
-      <p id="coach-text"></p>
-      <div id="msg"></div>
-      <div id="choices"></div>
-    </div>
-  </section>
-
-  <section id="inv" class="card">
-    <h2>ארון המושגים <span class="small">· מעבירים עכבר כדי לראות את הקו במפה · לוחצים ומחזיקים כדי להתבונן (הקו מתארך)</span></h2>
-    <div id="inv-list"></div>
-  </section>
-</main>
-
-<div id="overlay" class="hidden"><div class="card" id="overlay-body"></div></div>
+<div id="wrap"><div id="stage">
+  <canvas id="scene" width="1280" height="720"></canvas>
+  <canvas id="map" width="500" height="470"></canvas>
+  <div id="status"><span id="st-coins"></span><span id="st-trust"></span><span id="st-day"></span><button id="btn-sound" style="color:#f6e7c3;font-size:18px">🔊</button></div>
+  <div id="hints"></div>
+  <div id="bubble"><span class="who"></span><span class="text"></span></div>
+  <div id="coach" class="hidden"><span class="who">ר׳ בערל לוחש:</span><span class="text"></span></div>
+  <div id="msg"></div>
+  <div id="bar"></div>
+  <div id="modal" class="hidden"><div class="sheet" id="sheet"></div></div>
+</div></div>
 
 <script>
 'use strict';
 // ===========================================================================
-// Data (design doc sections 3א–3ה and 16). Map units: center (0,0), x to the
-// right, y up. The Action Map spans -12..12.
+// Data (design doc sections 3א–3ה and 16). Map units: center (0,0), x right, y up.
 // ===========================================================================
 const MAP_HALF = 12, TARGET_R = 1.2, MAX_CONCEPTS = 5;
-const CONTEMPLATE_SECONDS = 4, SIMPLE_BUDGET = 3, SIMPLE_SPEED = 0.3;
-const TALK_TURNS_PER_SEC = 0.8;          // the talk button = this many circles a second
-const SAVE_KEY = 'yafutzu-save-v1';
+const CONTEMPLATE_SECONDS = 2.5, SIMPLE_BUDGET = 3, SIMPLE_SPEED = 0.6;
+const TALK_TURNS_PER_SEC = 1.1;
+const SAVE_KEY = 'yafutzu-save-v2';
 
 function norm(x, y) { const l = Math.hypot(x, y); return { x: x / l, y: y / l }; }
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-// Concepts: len = [no contemplation, full], speed = tiles per conversation turn.
-// shape(s, L) = the offset at arc length s along a line of length L.
 const CONCEPTS = [
-  { id: 'love', name: 'אהבה', arrow: '↗', len: [2, 5], speed: 1, price: 4, stock: 8, dir: 'אלכסון למעלה וימינה',
+  { id: 'love', name: 'אהבה', arrow: '↗', len: [2, 5], speed: 1, price: 4, stock: 6, sub: 'למעלה וימינה', tone: 523,
     shape: (s, L) => { const d = norm(1, 1), bow = Math.sin(Math.PI * s / L) * 0.12 * L; return { x: d.x * s - d.y * bow, y: d.y * s + d.x * bow }; } },
-  { id: 'awe', name: 'יראה', arrow: '↓', len: [2, 5], speed: 0.5, price: 4, stock: 8, dir: 'למטה',
-    note: 'איטית: קל לעצור בדיוק', shape: (s) => ({ x: 0, y: -s }) },
-  { id: 'joy', name: 'שמחה', arrow: '→', len: [2, 6], speed: 1.5, price: 3, stock: 10, dir: 'ימינה',
-    note: 'עוברת דרך "עצבות" בלי נזק', immune: ['sadness'], shape: (s) => ({ x: s, y: 0 }) },
-  { id: 'trust', name: 'ביטחון', arrow: '↑', len: [3, 7], speed: 1, price: 5, stock: 6, dir: 'למעלה',
-    note: 'בסוף נוטה קצת שמאלה', shape: (s, L) => ({ x: -Math.max(0, s - (L - 1)) * 0.7, y: Math.min(s, L - 1) + Math.max(0, s - (L - 1)) * 0.7 }) },
-  { id: 'zeal', name: 'זריזות', arrow: '←', len: [1, 4], speed: 2, price: 6, stock: 4, dir: 'שמאלה בזיגזג',
-    note: 'מבטלת את המשקל במושג הבא', noWeightNext: true,
+  { id: 'awe', name: 'יראה', arrow: '↓', len: [2, 5], speed: 0.5, price: 4, stock: 6, sub: 'למטה · איטית', tone: 392, shape: (s) => ({ x: 0, y: -s }) },
+  { id: 'joy', name: 'שמחה', arrow: '→', len: [2, 6], speed: 1.5, price: 3, stock: 8, sub: 'ימינה · עוברת עצבות', tone: 659,
+    immune: ['sadness'], shape: (s) => ({ x: s, y: 0 }) },
+  { id: 'trust', name: 'ביטחון', arrow: '↑', len: [3, 7], speed: 1, price: 5, stock: 5, sub: 'למעלה', tone: 587,
+    shape: (s, L) => ({ x: -Math.max(0, s - (L - 1)) * 0.7, y: Math.min(s, L - 1) + Math.max(0, s - (L - 1)) * 0.7 }) },
+  { id: 'zeal', name: 'זריזות', arrow: '←', len: [1, 4], speed: 2, price: 6, stock: 3, sub: 'שמאלה · מבטלת משקל', tone: 784, noWeightNext: true,
     shape: (s, L) => { const p = L / 3, t = (s % p) / p; return { x: -s, y: (t < 0.5 ? t : 1 - t) }; } }
 ];
 
 const HANHAGOT = [
-  { id: 'tefillin', name: 'הנחת תפילין', x: 5, y: 4, base: 20, mark: 'ת', why: 'כמה דקות בבוקר' },
-  { id: 'tzedaka', name: 'צדקה', x: 7, y: -1, base: 15, mark: 'צ', why: 'לתת, גם מעט' },
-  { id: 'mezuza', name: 'מזוזה', x: -3, y: 6, base: 18, mark: 'מ', why: 'שמירה על הבית' },
-  { id: 'books', name: 'ספרי קודש בבית', x: -6, y: -2, base: 16, mark: 'ס', why: 'ספר יהודי על המדף' }
+  { id: 'tefillin', name: 'הנחת תפילין', x: 5, y: 4, base: 20, mark: 'ת', sub: 'כמה דקות בבוקר' },
+  { id: 'tzedaka', name: 'צדקה', x: 7, y: -1, base: 15, mark: 'צ', sub: 'לתת, גם מעט' },
+  { id: 'mezuza', name: 'מזוזה', x: -3, y: 6, base: 18, mark: 'מ', sub: 'שמירה על הבית' },
+  { id: 'books', name: 'ספרי קודש', x: -6, y: -2, base: 16, mark: 'ס', sub: 'ספר יהודי בבית' }
 ];
 
 const KLIPOT = [
@@ -228,80 +135,75 @@ const KLIPOT = [
   { id: 'what', name: 'מה יגידו', x: 0, y: -5, r: 1, kind: 'slow' }
 ];
 
-// The hint icons (step 1 of the doc): what each one means.
-const HINTS = { clock: '⏰ אין זמן', home: '🏠 בית ומשפחה', coin: '₪ פרנסה וכסף', book: '📖 ספר ולימוד', heart: '💔 בדידות' };
+const HINTS = { clock: '⏰ אין זמן', home: '🏠 בית ומשפחה', coin: '₪ פרנסה', book: '📖 לימוד', heart: '💔 בדידות' };
 
-// Recurring Jews with a story arc (doc section 16, using the Action Map's hanhagot).
-// Each visit: what he says, hint ids, fitting hanhagot (the first is worth most),
-// where the candle starts. weight 0..3 pulls the candle back; style = what persuades him.
+// look: coat color, hat kind, beard, skin tone — drawn in code.
 const PEOPLE = [
-  { id: 'david', name: 'דוד', who: 'בעל המכולת ממול', trait: 'אדם מעשי שרץ כל היום', style: 'practical', weight: 1, visits: [
+  { id: 'david', name: 'דוד', who: 'בעל המכולת', trait: 'אדם מעשי שרץ כל היום', style: 'practical', weight: 1,
+    look: { coat: '#4f6d8a', hat: 'cap', beard: false, apron: true }, visits: [
     { say: 'אין לי זמן לשום דבר, אני רץ מהבוקר עד הלילה.', hints: ['clock'], valid: ['tefillin', 'tzedaka'], start: [1, 0] },
     { say: 'התפילין נכנסו לי לבוקר. עכשיו הילדים שואלים מה זה כל הדברים האלה.', hints: ['home', 'book'], valid: ['books', 'mezuza'], start: [1, 1] }] },
-  { id: 'avi', name: 'אבי', who: 'נהג מונית', trait: 'לב חם, תמיד ממהר', style: 'warm', weight: 0, visits: [
+  { id: 'avi', name: 'אבי', who: 'נהג מונית', trait: 'לב חם, תמיד ממהר', style: 'warm', weight: 0,
+    look: { coat: '#8a5a3a', hat: 'none', beard: true }, visits: [
     { say: 'כל היום נוסעים מספרים לי צרות. הייתי רוצה לעזור למישהו, באמת.', hints: ['coin', 'heart'], valid: ['tzedaka'], start: [1, -2] },
     { say: 'המשמרת שלי מתחילה בשש בבוקר. מה אפשר לעשות כבר אז?', hints: ['clock'], valid: ['tefillin'], start: [0, 1] }] },
-  { id: 'goldberg', name: 'מר גולדברג', who: 'מורה בגמלאות', trait: 'אוהב ספרים ונימוקים', style: 'rational', weight: 1, visits: [
+  { id: 'goldberg', name: 'מר גולדברג', who: 'מורה בגמלאות', trait: 'אוהב ספרים ונימוקים', style: 'rational', weight: 1,
+    look: { coat: '#5a5040', hat: 'fedora', beard: true, grey: true, glasses: true }, visits: [
     { say: 'יש לי ספרייה שלמה בבית, ואין בה אפילו ספר יהודי אחד.', hints: ['book', 'home'], valid: ['books'], start: [-2, 0] },
     { say: 'הנכדים באים לגור אצלי לכמה חודשים. רוצה שהבית יהיה מוגן.', hints: ['home'], valid: ['mezuza', 'books'], start: [-1, 2] }] },
-  { id: 'itay', name: 'איתי', who: 'חייל בחופשה', trait: 'פשוט וחם', style: 'warm', weight: 1, visits: [
+  { id: 'itay', name: 'איתי', who: 'חייל בחופשה', trait: 'פשוט וחם', style: 'warm', weight: 1,
+    look: { coat: '#5d6b3a', hat: 'beret', beard: false }, visits: [
     { say: 'חזרתי הביתה לכמה ימים. בבסיס ראיתי חבר׳ה מניחים תפילין בבוקר.', hints: ['clock'], valid: ['tefillin', 'tzedaka'], start: [2, -1] }] },
-  { id: 'cohen', name: 'מר כהן', who: 'השכן מהבניין ממול', trait: 'מתלונן, אבל לב טוב', style: 'warm', weight: 3, visits: [
-    { say: 'עברתי לגור ממול ואתם עושים פה רעש כל הערב. ...טוב, כבר נכנסתי.', hints: ['home'], valid: ['mezuza'], start: [2, 3] }] },
-  { id: 'yoni', name: 'יוני', who: 'סטודנט', trait: 'סקפטי, שואל הרבה שאלות', style: 'rational', weight: 2, visits: [
+  { id: 'cohen', name: 'מר כהן', who: 'השכן ממול', trait: 'מתלונן, אבל לב טוב', style: 'warm', weight: 3,
+    look: { coat: '#6a3a3a', hat: 'none', beard: false, grey: true }, visits: [
+    { say: 'אתם עושים פה רעש כל הערב! ...טוב, כבר נכנסתי. עברתי עכשיו לדירה ממול.', hints: ['home'], valid: ['mezuza'], start: [2, 3] }] },
+  { id: 'yoni', name: 'יוני', who: 'סטודנט', trait: 'סקפטי, שואל הרבה שאלות', style: 'rational', weight: 2,
+    look: { coat: '#3a5a5a', hat: 'none', beard: false, glasses: true }, visits: [
     { say: 'אני רוצה להבין, לא רק לעשות. איפה בכלל אפשר לקרוא על זה?', hints: ['book'], valid: ['books', 'tefillin'], start: [3, -4] }] },
-  { id: 'ron', name: 'רון', who: 'איש הייטק', trait: 'בטוח בעצמו, מחשב כל צעד', style: 'rational', weight: 3, visits: [
+  { id: 'ron', name: 'רון', who: 'איש הייטק', trait: 'בטוח בעצמו, מחשב כל צעד', style: 'rational', weight: 3,
+    look: { coat: '#2f3440', hat: 'none', beard: false }, visits: [
     { say: 'החברה שלי גייסה עכשיו הרבה כסף. אני לא צריך עזרה מאף אחד.', hints: ['coin'], valid: ['tzedaka'], start: [-3, -4] }] }
 ];
 
 const QUESTIONS = [
   { q: 'למה זה בכלל חשוב?', a: {
-    warm: 'כי אכפת לך, ואני רואה את זה עליך.',
-    rational: 'כי כל מעשה טוב משנה משהו בעולם, גם אם הוא קטן.',
-    practical: 'זה לוקח רק כמה דקות, ואפשר להתחיל כבר היום.' } },
+    warm: 'כי אכפת לך, ואני רואה את זה עליך.', rational: 'כי כל מעשה טוב משנה משהו בעולם, גם קטן.', practical: 'זה לוקח כמה דקות, ואפשר להתחיל היום.' } },
   { q: 'ומה אם לא אצליח להתמיד?', a: {
-    warm: 'גם פעם אחת היא שמחה גדולה.',
-    rational: 'התמדה נבנית צעד אחר צעד, לא בבת אחת.',
-    practical: 'נקבע יחד זמן קבוע שנוח לך.' } },
+    warm: 'גם פעם אחת היא שמחה גדולה.', rational: 'התמדה נבנית צעד אחר צעד.', practical: 'נקבע יחד זמן קבוע שנוח לך.' } },
   { q: 'למה דווקא עכשיו?', a: {
-    warm: 'כי נכנסת לכאן היום, וזה לא במקרה.',
-    rational: 'אין רגע מתאים יותר מהרגע הזה.',
-    practical: 'הכול מוכן כאן בשבילך, עכשיו.' } }
+    warm: 'כי נכנסת לכאן היום, וזה לא במקרה.', rational: 'אין רגע מתאים יותר מהרגע הזה.', practical: 'הכול מוכן כאן בשבילך, עכשיו.' } }
 ];
-const STYLE_NAME = { warm: 'חם', rational: 'שכלי', practical: 'מעשי' };
-
+const STYLE_NAME = { warm: 'חמה', rational: 'שכלית', practical: 'מעשית' };
 const LEVELS = [
-  { name: 'התמדה', max: 0.3, mult: 3, xp: 20, trust: 0.3 },
-  { name: 'קבלה', max: 0.7, mult: 2, xp: 10, trust: 0.15 },
+  { name: 'התמדה', max: 0.35, mult: 3, xp: 20, trust: 0.3 },
+  { name: 'קבלה', max: 0.75, mult: 2, xp: 10, trust: 0.15 },
   { name: 'נגיעה', max: TARGET_R, mult: 1, xp: 5, trust: 0 }
 ];
-const JEWS_PER_DAY = 4, HOUSE_COST = 10, RETURN_AFTER = 3;
+const JEWS_PER_DAY = 4, HOUSE_COST = 10, RETURN_AFTER = 3, CITY_HOUSES = 14;
 
 // ===========================================================================
-// State (the persistent part is saved in this browser)
+// State
 // ===========================================================================
 const S = {
-  day: 1, coins: 30, trust: 3, xp: 0, served: 0, todayCount: 0, tutorialDone: false,
+  day: 1, coins: 30, trust: 3, xp: 0, served: 0, todayCount: 0, tutorialDone: false, sound: true,
   stock: Object.fromEntries(CONCEPTS.map((c) => [c.id, c.stock])),
-  lit: new Set(), arc: {}, queue: PEOPLE.map((p) => p.id),
-  // the current answer:
-  person: null, visit: null, phase: 'read', hanhaga: null, pos: { x: 0, y: 0 }, start: null, trail: [],
-  used: 0, noWeight: false, hover: null, selected: null, depth: 0, ready: null, path: null,
-  simpleLeft: SIMPLE_BUDGET, nigun: null, q: 0, correct: 0
+  lit: new Set(), arc: {}, queue: PEOPLE.map((p) => p.id), litHouses: 0,
+  person: null, visit: null, phase: 'intro', hanhaga: null, pos: { x: 0, y: 0 }, shown: { x: 0, y: 0 }, start: null, trail: [],
+  used: 0, noWeight: false, hover: null, holding: null, depth: 0, path: null, talking: false,
+  simpleLeft: SIMPLE_BUDGET, simpling: false, nigun: null, q: 0, correct: 0, shake: 0, mood: 'neutral'
 };
-
 function save() {
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: S.day, coins: S.coins, trust: S.trust, xp: S.xp, served: S.served,
-      todayCount: S.todayCount, tutorialDone: S.tutorialDone, stock: S.stock, lit: [...S.lit], arc: S.arc, queue: S.queue }));
-  } catch { /* private mode: progress lasts until reload */ }
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: S.day, coins: S.coins, trust: S.trust, xp: S.xp, served: S.served, todayCount: S.todayCount,
+      tutorialDone: S.tutorialDone, sound: S.sound, stock: S.stock, lit: [...S.lit], arc: S.arc, queue: S.queue, litHouses: S.litHouses }));
+  } catch { /* private mode */ }
 }
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!d || typeof d !== 'object') return false;
-    for (const k of ['day', 'coins', 'trust', 'xp', 'served', 'todayCount']) if (Number.isFinite(d[k])) S[k] = d[k];
-    S.tutorialDone = !!d.tutorialDone;
+    for (const k of ['day', 'coins', 'trust', 'xp', 'served', 'todayCount', 'litHouses']) if (Number.isFinite(d[k])) S[k] = d[k];
+    S.tutorialDone = !!d.tutorialDone; S.sound = d.sound !== false;
     if (d.stock) for (const c of CONCEPTS) if (Number.isFinite(d.stock[c.id])) S.stock[c.id] = d.stock[c.id];
     if (Array.isArray(d.lit)) S.lit = new Set(d.lit);
     if (d.arc && typeof d.arc === 'object') S.arc = d.arc;
@@ -311,189 +213,213 @@ function load() {
 }
 
 // ===========================================================================
+// Sound (synthesized, no files)
+// ===========================================================================
+let AC = null;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch { AC = null; } } return AC; }
+function tone(freq, dur = 0.25, type = 'sine', vol = 0.15, when = 0) {
+  const a = S.sound && ac(); if (!a) return;
+  const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur = 0.3, vol = 0.08, freq = 400) {
+  const a = S.sound && ac(); if (!a) return;
+  const b = a.createBuffer(1, a.sampleRate * dur, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol;
+  s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start();
+}
+const SFX = {
+  pick: () => tone(660, 0.12, 'triangle', 0.12),
+  page: () => noise(0.12, 0.05, 2500),
+  insert: (f) => { tone(f, 0.3, 'triangle', 0.14); tone(f * 1.5, 0.3, 'sine', 0.08, 0.06); },
+  murmur: () => noise(0.18, 0.04, 500),
+  klipa: () => { tone(80, 0.6, 'sawtooth', 0.12); noise(0.5, 0.15, 200); },
+  near: () => tone(110, 0.15, 'sine', 0.06),
+  beat: (i) => tone([392, 440, 494, 587][i], 0.32, 'triangle', 0.16),
+  hit: () => tone(784, 0.15, 'sine', 0.1),
+  good: () => tone(587, 0.18, 'triangle', 0.12),
+  bad: () => tone(220, 0.25, 'triangle', 0.1),
+  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.5, 'triangle', 0.13, i * 0.09)),
+  lose: () => [392, 330, 262].forEach((f, i) => tone(f, 0.4, 'triangle', 0.1, i * 0.12)),
+  coin: () => tone(1320, 0.08, 'square', 0.04)
+};
+
+// ===========================================================================
 // UI helpers
 // ===========================================================================
 const $ = (id) => document.getElementById(id);
-function say(text, bad = false) { const m = $('msg'); m.textContent = text; m.classList.toggle('bad', bad); }
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
+let msgTimer = null;
+function flash(text) { $('msg').textContent = text; clearTimeout(msgTimer); msgTimer = setTimeout(() => { $('msg').textContent = ''; }, 2600); }
+function speak(text) {
+  const p = S.person;
+  $('bubble').querySelector('.who').textContent = p ? `${p.name}, ${p.who}` : '';
+  $('bubble').querySelector('.text').textContent = text;
+}
 function coach(text) {
-  $('coach-who').textContent = S.tutorialDone ? 'מה עכשיו' : 'ר׳ בערל, מוכר הספרים, מסביר:';
-  $('coach-text').textContent = text;
+  const c = $('coach');
+  if (S.tutorialDone || !text) { c.classList.add('hidden'); return; }
+  c.classList.remove('hidden'); c.querySelector('.text').textContent = text;
 }
-function setChoices(list) {
-  const box = $('choices'); box.replaceChildren();
-  for (const item of list) {
-    const b = document.createElement('button');
-    b.innerHTML = item.html; b.onclick = item.fn;
-    if (item.good) b.classList.add('good');
-    box.appendChild(b);
+function focusOn(node) { document.querySelectorAll('.focus').forEach((n) => n.classList.remove('focus')); if (node && !S.tutorialDone) node.classList.add('focus'); }
+function status() {
+  $('st-coins').textContent = `${Math.round(S.coins)} ת׳`;
+  $('st-trust').textContent = `אמון ${S.trust.toFixed(1)}`;
+  $('st-day').textContent = `יום ${S.day}`;
+  $('btn-sound').textContent = S.sound ? '🔊' : '🔇';
+}
+function modal(html, buttons) {
+  $('sheet').innerHTML = html;
+  const row = el('div', 'row');
+  for (const [label, fn, plain] of buttons) {
+    const b = el('button', 'btn' + (plain ? ' plain' : ''), label);
+    b.onclick = () => { $('modal').classList.add('hidden'); fn(); };
+    row.appendChild(b);
   }
-}
-function overlay(html, label, fn) {
-  $('overlay-body').innerHTML = html;
-  const b = document.createElement('button'); b.className = 'primary'; b.textContent = label; b.style.marginTop = '12px';
-  b.onclick = () => { $('overlay').classList.add('hidden'); fn(); };
-  $('overlay-body').appendChild(b);
-  $('overlay').classList.remove('hidden');
-  b.focus();
-}
-function stats() {
-  $('st-day').textContent = S.day; $('st-coins').textContent = Math.round(S.coins);
-  $('st-trust').textContent = S.trust.toFixed(1); $('st-xp').textContent = S.xp;
-}
-// Which of the six steps we are on, for the tracker at the top.
-function stepNow() {
-  if (S.phase === 'read') return 'read';
-  if (S.phase === 'nigun') return 'nigun';
-  if (S.phase === 'persuade' || S.phase === 'done') return 'persuade';
-  if (S.path && S.path.s < S.path.L) return 'talk';
-  if (S.ready) return 'heart';
-  if (inTarget()) return 'nigun';
-  return 'concept';
-}
-function setFocus(ids) {
-  document.querySelectorAll('.focus').forEach((el) => el.classList.remove('focus'));
-  if (S.tutorialDone) return;
-  for (const id of ids) { const el = typeof id === 'string' ? document.querySelector(id) : id; if (el) el.classList.add('focus'); }
+  $('sheet').appendChild(row);
+  $('modal').classList.remove('hidden');
 }
 
-// One place decides what the instruction box says and what is highlighted.
-function guide() {
-  const order = ['read', 'concept', 'heart', 'talk', 'nigun', 'persuade'];
-  const now = stepNow(), idx = order.indexOf(now);
-  document.querySelectorAll('#steps span').forEach((s) => {
-    const i = order.indexOf(s.dataset.step);
-    s.classList.toggle('now', i === idx); s.classList.toggle('done', i < idx);
-  });
-  const t = S.tutorialDone, p = S.person, h = S.hanhaga;
-  if (S.phase === 'read') {
-    coach(t ? 'קראו מה הוא אומר ואת הרמזים, ובחרו הנהגה שמתאימה לו.'
-      : `${p.name} אומר שאין לו זמן, והרמז ⏰ אומר את אותו דבר. מה לוקח רק כמה דקות? בחרו "הנחת תפילין".`);
-    setFocus(t ? [] : ['#choices button']);
-    return;
-  }
-  if (S.phase === 'build') {
-    const d = dist(S.pos, h);
-    if (now === 'nigun') {
-      coach(t ? 'הנר בתוך הסמל! לחצו "ניגון", ואז רווח (או הכפתור) בכל פעם שעיגול נדלק. ככל שהנר קרוב יותר למרכז הסמל, המענה עמוק יותר.'
-        : 'מצוין, הנר בתוך הסמל של התפילין! עכשיו לחצו "ניגון" 🎵, ואז רווח בכל פעם שאחד מארבעת העיגולים נדלק.');
-      setFocus(['#btn-nigun']);
-    } else if (now === 'talk') {
-      coach(t ? 'החזיקו "מחזיקים כדי לדבר" (או סובבו את העכבר סביב הלב). הנר זז לאורך הקו המקווקו. אפשר לעצור באמצע.'
-        : 'עכשיו מדברים איתו: החזיקו את הכפתור "מחזיקים כדי לדבר", והנר יתקדם לאורך הקו. משחררים כדי לעצור.');
-      setFocus(['#btn-talk']);
-    } else if (now === 'heart') {
-      coach(t ? `לחצו על הלב כדי להכניס את "${S.ready.concept.name}".` : `יפה! הקו האדום במפה מראה לאן הנר ילך. עכשיו לחצו על הלב ❤️ כדי להכניס את "${S.ready.concept.name}".`);
-      setFocus(['#heart']);
-    } else {
-      const first = S.used === 0;
-      if (!t && first) {
-        coach(`הסמל של "${h.name}" במפה נמצא למעלה וימינה מהנר. "אהבה" ↗ הולכת בדיוק לשם. לחצו והחזיקו על "אהבה", וראו איך הקו האדום מתארך. שחררו כשהוא קרוב לסמל.`);
-        setFocus(['.concept[data-id="love"]']);
-      } else if (!t) {
-        coach(`הנר עוד לא בתוך הסמל (מרחק ${d.toFixed(1)}). בחרו מושג שמוביל אליו: מעבירים עכבר כדי לראות את הקו, ומחזיקים כדי להאריך. שימו לב: המשקל של ${p.name} מושך את הנר צעד אחורה בכל מושג חדש.`);
-        setFocus([]);
-      } else {
-        coach(`הובילו את הנר אל "${h.name}" (מרחק ${d.toFixed(1)}). בחרו מושג: עכבר מעליו מראה את הקו, החזקה מאריכה אותו. ${S.used}/${MAX_CONCEPTS} מושגים.`);
-        setFocus([]);
-      }
+// ===========================================================================
+// The bar: what the player can do right now (one kind of thing at a time)
+// ===========================================================================
+function bar() {
+  const b = $('bar'); b.replaceChildren();
+  const p = S.phase;
+  if (p === 'read') {
+    for (const h of HANHAGOT) {
+      const c = el('button', 'card hanhaga', `<span class="big">${h.mark}</span><span class="nm">${h.name}</span><span class="sub">${h.sub}</span>`);
+      c.onclick = () => chooseHanhaga(h);
+      c.onpointerenter = () => { S.hoverH = h; }; c.onpointerleave = () => { S.hoverH = null; };
+      c.dataset.id = h.id; b.appendChild(c);
     }
+    coach(`${S.person.name} ממהר, והרמז ⏰ אומר שאין לו זמן. מה לוקח רק כמה דקות? בחרו "הנחת תפילין".`);
+    focusOn(b.querySelector('[data-id="tefillin"]'));
     return;
   }
-  if (S.phase === 'nigun') { coach('לחצו רווח (או על הכפתור) בדיוק כשהעיגול גדל ונדלק. 4 פעמות.'); setFocus(['#btn-nigun']); return; }
-  if (S.phase === 'persuade') {
-    coach(t ? `${p.name} שואל. כל יהודי נפתח לסגנון אחר: חם, שכלי או מעשי. רמז: "${p.trait}".`
-      : `${p.name} שואל שאלה. כל יהודי נפתח לסגנון אחר. הוא "${p.trait}", אז תשובה מעשית תיגע בו הכי הרבה.`);
-    setFocus(['#choices .good']);
+  if (p === 'build') {
+    const s = el('button', 'tool', '<b>💧</b>פשטות'); s.title = 'מחזיקים: הנר נמשך לכיוון הנקודה היהודית שבמרכז';
+    s.disabled = S.simpleLeft <= 0; s.id = 'btn-simple';
+    s.onpointerdown = () => { S.simpling = true; S.path = null; }; s.onpointerup = s.onpointerleave = () => { S.simpling = false; };
+    b.appendChild(s);
+    for (const c of CONCEPTS) {
+      const off = !S.stock[c.id] || S.used >= MAX_CONCEPTS;
+      const card = el('button', 'card' + (off ? ' off' : ''),
+        `<span class="count">×${S.stock[c.id]}</span><span class="big">${c.arrow}</span><span class="nm">${c.name}</span><span class="sub">${c.sub}</span><span class="ring"></span>`);
+      card.dataset.id = c.id;
+      card.onpointerenter = () => { S.hover = c; };
+      card.onpointerleave = () => { if (S.hover === c) S.hover = null; };
+      card.onpointerdown = (e) => { e.preventDefault(); if (!off) startHold(c); };
+      b.appendChild(card);
+    }
+    const talk = el('button', 'action', 'מדברים 🗨<small>מחזיקים לחוץ · או רווח</small>');
+    talk.id = 'btn-talk';
+    talk.onpointerdown = () => { S.talking = true; }; talk.onpointerup = talk.onpointerleave = () => { S.talking = false; };
+    b.appendChild(talk);
+    const nig = el('button', 'action', 'ניגון 🎵<small>הנר בתוך הסמל</small>');
+    nig.id = 'btn-nigun'; nig.onclick = startNigun;
+    b.appendChild(nig);
+    updateBuild();
+    return;
+  }
+  if (p === 'nigun') {
+    const d = el('button', 'action', 'פעמה! 🥁<small>רווח, או לחיצה כאן בכל עיגול שנדלק</small>');
+    d.style.width = '520px'; d.onpointerdown = nigunPress; b.appendChild(d);
+    coach('ארבעה עיגולים יידלקו על המפה, אחד אחרי השני. לחצו רווח בדיוק כשכל אחד נדלק.');
+    focusOn(d);
+    return;
+  }
+  if (p === 'persuade') {
+    const q = QUESTIONS[S.q], styles = ['warm', 'rational', 'practical'], shift = (S.served + S.q) % 3;
+    for (const style of styles.map((_, i) => styles[(i + shift) % 3])) {
+      const c = el('button', 'card wide', `<span>${q.a[style]}</span><span class="sub">תשובה ${STYLE_NAME[style]}</span>`);
+      c.onclick = () => answer(style); c.dataset.style = style; b.appendChild(c);
+    }
+    coach(`כל יהודי נפתח לסגנון אחר. ${S.person.name} הוא "${S.person.trait}", אז תשובה מעשית תיגע בו.`);
+    focusOn(b.querySelector(`[data-style="${S.person.style}"]`));
+  }
+}
+
+// Updates the build bar (enabled buttons, coach line) without rebuilding it.
+let lastBuildKey = '';
+function updateBuild() {
+  if (S.phase !== 'build') return;
+  const lineLeft = S.path && S.path.s < S.path.L, inside = inTarget();
+  const talk = $('btn-talk'), nig = $('btn-nigun'), simple = $('btn-simple');
+  if (!talk) return;
+  talk.disabled = !lineLeft; nig.disabled = !inside; simple.disabled = S.simpleLeft <= 0;
+  talk.style.display = inside && !lineLeft ? 'none' : ''; nig.style.display = inside && !lineLeft ? '' : 'none';
+  if (S.used >= MAX_CONCEPTS) document.querySelectorAll('#bar .card').forEach((c) => c.classList.add('off'));
+  const key = `${!!lineLeft}|${inside}|${S.used}|${!!S.holding}`;
+  if (key === lastBuildKey) return;
+  lastBuildKey = key;
+  if (inside && !lineLeft) {
+    coach('הנר בתוך הסמל! לחצו "ניגון" כדי לחתום את ההחלטה. ככל שהנר קרוב יותר למרכז הסמל, המענה עמוק יותר.');
+    focusOn(nig);
+  } else if (lineLeft) {
+    coach('עכשיו מדברים: החזיקו את "מדברים" (או רווח), והנר זז לאורך הקו. משחררים כדי לעצור.');
+    focusOn(talk);
+  } else if (S.used === 0) {
+    coach(`הסמל של "${S.hanhaga.name}" במפה נמצא למעלה וימינה מהנר. "אהבה" ↗ הולכת לשם: לחצו והחזיקו עליה. ככל שמחזיקים יותר, הקו ארוך יותר. שחררו כשהקו מגיע לסמל.`);
+    focusOn(document.querySelector('#bar .card[data-id="love"]'));
+  } else {
+    coach(`הנר עוד לא בסמל. בחרו מושג שמוביל אליו. העבירו עכבר מעל כרטיס כדי לראות את הקו שלו על המפה.`);
+    focusOn(null);
   }
 }
 
 // ===========================================================================
-// Flow: read -> build (concepts + talk) -> nigun -> persuade -> result
+// Flow
 // ===========================================================================
 function nextJew() {
-  const id = S.queue.shift();
-  const person = PEOPLE.find((p) => p.id === id);
-  const stage = S.arc[id] || 0;
+  if (!S.queue.length) S.queue = PEOPLE.map((p) => p.id);
+  const person = PEOPLE.find((p) => p.id === S.queue.shift());
+  const stage = S.arc[person.id] || 0;
   const visit = person.visits[Math.min(stage, person.visits.length - 1)];
   Object.assign(S, {
     person, visit, phase: 'read', hanhaga: null, start: { x: visit.start[0], y: visit.start[1] },
-    used: 0, noWeight: false, hover: null, selected: null, depth: 0, ready: null, path: null,
-    simpleLeft: SIMPLE_BUDGET, nigun: null, q: 0, correct: 0
+    used: 0, noWeight: false, hover: null, holding: null, depth: 0, path: null, talking: false,
+    simpleLeft: SIMPLE_BUDGET, simpling: false, nigun: null, q: 0, correct: 0, mood: 'neutral', enter: 0
   });
-  S.pos = { ...S.start }; S.trail = [{ ...S.pos }];
+  S.pos = { ...S.start }; S.shown = { ...S.start }; S.trail = [{ ...S.pos }];
   light(S.pos);
-  $('jew-face').textContent = person.name[0] === 'מ' && person.name.startsWith('מר') ? person.name.split(' ')[1][0] : person.name[0];
-  $('jew-name').textContent = `${person.name}, ${person.who}`;
-  $('jew-trait').textContent = person.trait + (stage > 0 ? ' · חוזר אליכם' : '');
-  $('bubble').textContent = visit.say;
-  $('hints').replaceChildren(...visit.hints.map((k) => Object.assign(document.createElement('span'), { textContent: HINTS[k] })));
-  const far = Math.hypot(S.start.x, S.start.y);
-  $('jew-meta').textContent = `${far <= 2.9 ? 'קרוב' : far <= 7 ? 'רחוק' : 'רחוק מאוד'} · משקל ${person.weight}${person.weight ? ' (מושך את הנר אחורה בכל מושג חדש)' : ''}`;
-  say('');
-  setChoices(HANHAGOT.map((h) => ({ html: `${h.name}<span class="why">${h.why}</span>`, fn: () => chooseHanhaga(h) })));
-  $('beats').classList.add('off');
-  refresh(); renderInv(); stats();
+  speak(visit.say);
+  $('hints').replaceChildren(...visit.hints.map((k) => el('span', '', HINTS[k])));
+  $('bubble').style.opacity = 1;
+  lastBuildKey = '';
+  bar(); status();
+  tone(440, 0.2, 'triangle', 0.08); tone(554, 0.25, 'triangle', 0.08, 0.1);
 }
 
 function chooseHanhaga(h) {
+  SFX.pick();
   S.hanhaga = h; S.phase = 'build';
   const fit = S.visit.valid.indexOf(h.id);
   S.fit = fit === 0 ? 1 : fit > 0 ? 0.8 : 0.5;
-  say(fit === 0 ? 'בחירה מצוינת.' : fit > 0 ? 'זה מתאים לו, אבל אולי יש משהו מתאים עוד יותר.' : 'לא בטוח שזה מה שהוא צריך עכשיו… אפשר לנסות.', fit < 0);
-  setChoices([]);
-  refresh(); renderInv();
+  S.mood = fit === 0 ? 'happy' : fit > 0 ? 'neutral' : 'doubt';
+  speak(fit === 0 ? 'כן… זה משהו שאני יכול לעשות.' : fit > 0 ? 'אפשר, אבל לא בטוח שזה הדבר בשבילי.' : 'הממ… לא ממש מה שחשבתי.');
+  bar();
 }
 
-// --- concepts: hover = preview, hold = contemplate, then click the heart ---
-function renderInv() {
-  const list = $('inv-list'); list.replaceChildren();
-  for (const c of CONCEPTS) {
-    const el = document.createElement('div');
-    el.className = 'concept' + (S.selected === c ? ' sel' : '') + (S.stock[c.id] ? '' : ' empty');
-    el.dataset.id = c.id;
-    const depth = S.selected === c ? S.depth : 0;
-    el.innerHTML = `<div class="top"><span class="nm">${c.name}</span><span class="arrow">${c.arrow}</span></div>
-      <div class="meta">${c.dir} · קו ${c.len[0]} עד ${c.len[1]}</div>
-      <div class="meta">${c.note || (c.speed < 1 ? 'איטי' : c.speed > 1 ? 'מהיר' : 'מהירות רגילה')}</div>
-      <div class="depth"><i style="width:${depth * 100}%"></i></div>
-      <div class="meta">במלאי: ${S.stock[c.id]} <button class="buy" ${S.coins < c.price ? 'disabled' : ''}>+1 ב-${c.price} ת'</button></div>`;
-    el.querySelector('.buy').onclick = (e) => { e.stopPropagation(); if (S.coins >= c.price) { S.coins -= c.price; S.stock[c.id]++; save(); stats(); renderInv(); } };
-    el.addEventListener('pointerenter', () => { S.hover = c; drawMap(); });
-    el.addEventListener('pointerleave', () => { if (S.hover === c) { S.hover = null; drawMap(); } });
-    el.addEventListener('pointerdown', (e) => { if (!e.target.classList.contains('buy')) startContemplate(c); });
-    list.appendChild(el);
-  }
-  guide();
-}
-
-let holdTimer = null;
-function startContemplate(c) {
-  if (S.phase !== 'build') { say(S.phase === 'read' ? 'קודם בחרו הנהגה.' : 'עכשיו לא בוחרים מושגים.', true); return; }
-  if (!S.stock[c.id]) { say(`אין "${c.name}" בארון. אפשר לקנות עוד בכפתור +1.`, true); return; }
-  if (S.used >= MAX_CONCEPTS) { say('הגעתם למקסימום של 5 מושגים במענה.', true); return; }
-  if (S.path && S.path.s < S.path.L) S.path = null; // starting a new concept lets go of the rest of the line
-  if (S.selected !== c) { S.selected = c; S.depth = 0; }
-  S.ready = { concept: c, L: lenOf(c, S.depth) };
-  renderInv();
-  const t0 = performance.now(), d0 = S.depth;
-  clearInterval(holdTimer);
-  holdTimer = setInterval(() => {
-    S.depth = Math.min(1, d0 + (performance.now() - t0) / 1000 / CONTEMPLATE_SECONDS);
-    const bar = document.querySelector(`.concept[data-id="${c.id}"] .depth i`); if (bar) bar.style.width = `${S.depth * 100}%`;
-    S.ready = { concept: c, L: lenOf(c, S.depth) };
-    drawMap();
-  }, 30);
+// Hold a concept card: the line grows; release: it goes into the heart.
+function startHold(c) {
+  if (S.phase !== 'build') return;
+  S.path = null; S.talking = false;
+  S.holding = c; S.depth = 0; S.holdStart = performance.now();
+  SFX.page();
   const stop = () => {
-    clearInterval(holdTimer); window.removeEventListener('pointerup', stop);
-    S.ready = { concept: c, L: lenOf(c, S.depth) };
-    refresh();
+    window.removeEventListener('pointerup', stop);
+    if (S.holding === c) insertConcept(c, lenOf(c, S.depth));
+    S.holding = null;
   };
   window.addEventListener('pointerup', stop);
 }
 const lenOf = (c, depth) => c.len[0] + (c.len[1] - c.len[0]) * depth;
 
-// Where the next concept will start: from the second concept on, the Jew's
-// weight pulls the candle back toward where he started.
 function nextOrigin() {
   let o = { ...S.pos };
   if (S.used >= 1 && !S.noWeight && S.person.weight > 0) {
@@ -503,28 +429,29 @@ function nextOrigin() {
   return o;
 }
 
-function insertConcept() {
-  const r = S.ready;
-  if (!r || S.phase !== 'build') return false;
-  S.stock[r.concept.id]--;
+function insertConcept(c, L) {
+  if (S.phase !== 'build' || !S.stock[c.id]) return false;
+  S.stock[c.id]--;
   const o = nextOrigin();
-  if (dist(o, S.pos) > 0.01) { S.pos = o; S.trail.push({ ...S.pos }); say(`המשקל של ${S.person.name} משך את הנר צעד אחורה.`); }
-  else say(`"${r.concept.name}" נכנס ללב.`);
-  S.noWeight = !!r.concept.noWeightNext;
+  if (dist(o, S.pos) > 0.01) { S.pos = o; S.trail.push({ ...S.pos }); flash(`${S.person.name} מושך אחורה (משקל ${S.person.weight})`); }
+  S.noWeight = !!c.noWeightNext;
   S.used++;
-  S.path = { concept: r.concept, origin: { ...S.pos }, L: r.L, s: 0 };
-  S.ready = null; S.selected = null; S.depth = 0;
-  renderInv(); refresh();
+  S.path = { concept: c, origin: { ...S.pos }, L, s: 0 };
+  S.heartPulse = 1;
+  SFX.insert(c.tone);
+  lastBuildKey = '';
+  bar();
   return true;
 }
 
-// --- conversation: moves the candle along the line ---------------------------
+// Moves the candle along the current line by `turns` conversation turns.
+let murmurT = 0, nearT = 0;
 function advance(turns) {
   const p = S.path;
   if (!p || p.s >= p.L || S.phase !== 'build') return;
   const slow = KLIPOT.some((k) => k.kind === 'slow' && dist(S.pos, k) < k.r);
   let ds = turns * p.concept.speed * (slow ? 0.25 : 1);
-  while (ds > 0 && p.s < p.L) {                    // small steps, so a klipa is never jumped over
+  while (ds > 0 && p.s < p.L) {
     const step = Math.min(ds, 0.05, p.L - p.s);
     p.s += step; ds -= step;
     const o = p.concept.shape(p.s, p.L);
@@ -537,177 +464,296 @@ function advance(turns) {
     if (hit) { S.trail.push({ ...S.pos }); confusion(hit); return; }
   }
   S.trail.push({ ...S.pos });
-  if (slow) say('הקליפה "מה יגידו" מאטה את השיחה…', true);
-  if (p.s >= p.L) say(inTarget() ? 'הנר בתוך הסמל!' : 'הקו הסתיים.');
-  refresh();
+  if (slow) flash('"מה יגידו" מאט את השיחה…');
+  if (p.s >= p.L && inTarget()) SFX.good();
 }
 
 function confusion(k) {
-  S.phase = 'done'; S.path = null; S.trust = Math.max(1, S.trust - 1);
-  returnLater(); save(); stats(); refresh();
-  overlay(`<p><b>עוד לא הגיע הזמן.</b></p><p>הנר נגע בקליפת "${k.name}", והמענה הפך לבלבול. המושגים שהוכנסו ללב אבדו, ואמון הקהילה ירד ב-1.</p>
-    <p class="small">טיפ: לפני שמדברים, הסתכלו אם הקו המקווקו עובר דרך עיגול כהה. אפשר לעצור באמצע הקו.</p>`, 'ליהודי הבא', afterJew);
+  S.phase = 'done'; S.path = null; S.talking = false; S.shake = 1; S.mood = 'sad';
+  S.trust = Math.max(1, S.trust - 1); returnLater(); save(); status();
+  SFX.klipa(); SFX.lose();
+  speak('לא… זה לא בשבילי. אולי פעם אחרת.');
+  $('bar').replaceChildren();
+  setTimeout(() => modal(`<h2>עוד לא הגיע הזמן</h2><p>הנר נגע בקליפת "<b>${k.name}</b>", והמענה הפך לבלבול.</p>
+    <p style="font-size:17px">טיפ: לפני שמדברים, הסתכלו על הקו המקווקו. אם הוא עובר בעיגול כהה, עצרו לפניו או בחרו מושג אחר.<br>${S.person.name} יחזור עוד מעט.</p>`,
+    [['ליהודי הבא', afterJew]]), 900);
 }
-function giveUp() {
-  if (S.phase !== 'build') return;
-  S.phase = 'done'; S.trust = Math.max(1, S.trust - 0.5); returnLater(); save(); stats();
-  overlay(`<p><b>עוד לא הגיע הזמן.</b></p><p>${S.person.name} יצא בלי מענה, ויחזור עוד מעט עם אותה שאלה. אמון הקהילה ירד קצת.</p>`, 'ליהודי הבא', afterJew);
-}
-// A Jew who did not get an answer comes back after a few others (no one disappears for good).
 function returnLater() { S.queue.splice(Math.min(RETURN_AFTER, S.queue.length), 0, S.person.id); }
 
-// --- talk button: hold to talk -------------------------------------------
-let talkTimer = null;
-function startTalk() {
-  if (!(S.phase === 'build' && S.path && S.path.s < S.path.L)) { if (S.phase === 'build') say('קודם בחרו מושג והכניסו אותו ללב.', true); return; }
-  let last = performance.now();
-  clearInterval(talkTimer);
-  talkTimer = setInterval(() => {
-    const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
-    spin += dt * 5; advance(dt * TALK_TURNS_PER_SEC);
-    if (!S.path || S.path.s >= S.path.L || S.phase !== 'build') stopTalk();
-  }, 30);
-}
-function stopTalk() { clearInterval(talkTimer); talkTimer = null; }
-
-// --- simplicity: hold to pull the candle toward the center -----------------
-let simpleTimer = null;
-function startSimple() {
-  if (S.phase !== 'build' || S.simpleLeft <= 0) return;
-  S.path = null;
-  let last = performance.now();
-  simpleTimer = setInterval(() => {
-    const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
-    S.simpleLeft = Math.max(0, S.simpleLeft - dt);
-    const d = Math.hypot(S.pos.x, S.pos.y);
-    if (d > 0.01) { const k = Math.min(d, SIMPLE_SPEED * dt) / d; S.pos = { x: S.pos.x * (1 - k), y: S.pos.y * (1 - k) }; }
-    S.trail.push({ ...S.pos }); light(S.pos);
-    if (S.simpleLeft <= 0) stopSimple();
-    refresh();
-  }, 30);
-}
-function stopSimple() { clearInterval(simpleTimer); simpleTimer = null; }
-
-// --- nigun: four beats --------------------------------------------------------
-const BEAT = 0.75, WINDOW = 0.2;
+// --- nigun -----------------------------------------------------------------
+const BEAT = 0.8, WINDOW = 0.22;
 function inTarget() { return !!S.hanhaga && dist(S.pos, S.hanhaga) <= TARGET_R; }
 function startNigun() {
   if (S.phase !== 'build' || !inTarget()) return;
-  S.phase = 'nigun'; S.path = null; stopTalk();
-  S.nigun = { t0: performance.now() / 1000 + 1.0, hits: [false, false, false, false], pressed: [false, false, false, false] };
-  $('beats').classList.remove('off');
-  refresh(); tickNigun();
-}
-function tickNigun() {
-  const n = S.nigun; if (!n || S.phase !== 'nigun') return;
-  const t = performance.now() / 1000 - n.t0;
-  [...$('beats').children].forEach((sp, i) => {
-    sp.classList.toggle('now', Math.abs(t - i * BEAT) < WINDOW);
-    sp.classList.toggle('hit', n.hits[i]);
-    sp.classList.toggle('miss', !n.hits[i] && t > i * BEAT + WINDOW);
-  });
-  if (t > 3 * BEAT + WINDOW + 0.25) { finishNigun(); return; }
-  requestAnimationFrame(tickNigun);
+  S.phase = 'nigun'; S.path = null; S.talking = false;
+  S.nigun = { t0: performance.now() / 1000 + 1.2, hits: [0, 0, 0, 0].map(() => false), pressed: [0, 0, 0, 0].map(() => false), played: [0, 0, 0, 0].map(() => false), done: false };
+  bar();
 }
 function nigunPress() {
   const n = S.nigun; if (!n || S.phase !== 'nigun') return;
   const t = performance.now() / 1000 - n.t0, i = Math.round(t / BEAT);
   if (i < 0 || i > 3 || n.pressed[i]) return;
   n.pressed[i] = true;
-  if (Math.abs(t - i * BEAT) < WINDOW) n.hits[i] = true;
+  if (Math.abs(t - i * BEAT) < WINDOW) { n.hits[i] = true; SFX.hit(); }
+}
+function tickNigun() {
+  const n = S.nigun; if (!n || S.phase !== 'nigun' || n.done) return;
+  const t = performance.now() / 1000 - n.t0;
+  for (let i = 0; i < 4; i++) if (!n.played[i] && t >= i * BEAT) { n.played[i] = true; SFX.beat(i); }
+  if (t > 3 * BEAT + WINDOW + 0.3) { n.done = true; finishNigun(); }
 }
 function finishNigun() {
   const hits = S.nigun.hits.filter(Boolean).length, h = S.hanhaga, d = dist(S.pos, h);
-  const move = hits === 4 ? 0.3 : hits === 3 ? 0 : -0.2;          // + toward the center of the symbol, − away
+  const move = hits === 4 ? 0.3 : hits === 3 ? 0 : -0.2;
   if (d > 0 && move) { const k = (move > 0 ? Math.min(d, move) : move) / d; S.pos = { x: S.pos.x + (h.x - S.pos.x) * k, y: S.pos.y + (h.y - S.pos.y) * k }; }
   const fd = dist(S.pos, h);
   S.level = LEVELS.find((l) => fd <= l.max) || null;
-  refresh();
   if (!S.level) {
-    S.phase = 'done'; S.trust = Math.max(1, S.trust - 1); returnLater(); save(); stats();
-    overlay(`<p><b>עוד לא הגיע הזמן.</b></p><p>הניגון לא היה בקצב (${hits}/4), והנר יצא מהסמל. אמון הקהילה ירד ב-1.</p>`, 'ליהודי הבא', afterJew);
+    S.phase = 'done'; S.trust = Math.max(1, S.trust - 1); returnLater(); save(); status(); SFX.lose(); S.mood = 'sad';
+    $('bar').replaceChildren();
+    setTimeout(() => modal(`<h2>עוד לא הגיע הזמן</h2><p>הניגון לא היה בקצב (${hits} מתוך 4), והנר יצא מהסמל.</p>`, [['ליהודי הבא', afterJew]]), 600);
     return;
   }
-  say(`ניגון ${hits}/4 · נחתם ברמת ${S.level.name}.`);
-  persuade();
+  flash(`ניגון: ${hits} מתוך 4 · ${S.level.name}`);
+  S.mood = 'happy';
+  S.phase = 'persuade';
+  speak(QUESTIONS[0].q);
+  bar();
 }
 
-// --- persuasion ------------------------------------------------------------
-function persuade() {
-  S.phase = 'persuade';
-  const q = QUESTIONS[S.q];
-  $('bubble').textContent = q.q;
-  const styles = ['warm', 'rational', 'practical'];
-  const shift = (S.served + S.q) % 3;
-  const order = styles.map((_, i) => styles[(i + shift) % 3]);
-  setChoices(order.map((style) => ({ html: `${q.a[style]}<span class="why">תשובה ${STYLE_NAME[style]}ה</span>`, fn: () => answer(style),
-    good: style === S.person.style })));
-  refresh();
-}
 function answer(style) {
-  if (style === S.person.style) { S.correct++; say('הוא מהנהן. הדברים נכנסו ללב.'); } else say('הוא חושב רגע… זה לא בדיוק מה שחיפש.', true);
+  if (style === S.person.style) { S.correct++; SFX.good(); S.mood = 'happy'; } else { SFX.bad(); S.mood = 'doubt'; }
   S.q++;
-  if (S.q < QUESTIONS.length) persuade(); else result();
+  if (S.q < QUESTIONS.length) { speak((style === S.person.style ? 'נכון… ' : 'הממ. ') + QUESTIONS[S.q].q); bar(); }
+  else result();
 }
 
 function result() {
   S.phase = 'done';
   const donation = Math.round(S.hanhaga.base * S.level.mult * S.fit * (1 + 0.1 * S.correct));
-  S.coins += donation; S.xp += S.level.xp; S.trust = Math.min(10, S.trust + S.level.trust); S.served++;
+  S.xp += S.level.xp; S.trust = Math.min(10, S.trust + S.level.trust); S.served++;
   const p = S.person, stage = S.arc[p.id] || 0;
   let arcText = '';
   if (S.level.name !== 'נגיעה' && stage + 1 < p.visits.length) {
-    S.arc[p.id] = stage + 1;
-    S.queue.splice(Math.min(RETURN_AFTER, S.queue.length), 0, p.id);
-    arcText = `<p class="small">${p.name} עוד יחזור אליכם עם שאלה חדשה. הסיפור שלו ממשיך.</p>`;
-  } else if (S.level.name === 'נגיעה' && stage + 1 < p.visits.length) {
-    arcText = `<p class="small">ברמת נגיעה הסיפור של ${p.name} לא מתקדם. ברמת קבלה ומעלה הוא יחזור עם שאלה חדשה.</p>`;
+    S.arc[p.id] = stage + 1; S.queue.splice(Math.min(RETURN_AFTER, S.queue.length), 0, p.id);
+    arcText = `<p style="font-size:17px">${p.name} עוד יחזור אליכם עם שאלה חדשה.</p>`;
   }
-  const wasTutorial = !S.tutorialDone; S.tutorialDone = true;
-  save(); stats(); setChoices([]); refresh();
-  overlay(`<p><b>נתקבל!</b></p>
-    <p>${p.name} מקבל על עצמו <b>${S.hanhaga.name}</b> ברמת <b>${S.level.name}</b>.</p>
-    <p>${S.correct} מתוך 3 תשובות בסגנון שלו (${STYLE_NAME[p.style]}). תרומה: <b>${donation} ת'</b> · עבודה +${S.level.xp}</p>
-    ${S.fit < 1 ? '<p class="small">ההנהגה לא הייתה הכי מתאימה לו, ולכן התרומה קטנה יותר.</p>' : ''}${arcText}
-    ${wasTutorial ? '<p class="small">סיימתם את ההדרכה! מעכשיו ר׳ בערל רק מזכיר מה עושים, בלי לבחור בשבילכם.</p>' : ''}`,
-  'ליהודי הבא', afterJew);
+  const wasTutorial = !S.tutorialDone; S.tutorialDone = true; coach('');
+  speak('תודה. באמת. אני מקבל על עצמי.');
+  $('bar').replaceChildren();
+  SFX.win();
+  // the flame flies to the town, and a house lights up
+  S.fly = { t: 0, from: mapToStage(S.pos), to: houseSpot(S.litHouses % CITY_HOUSES) };
+  setTimeout(() => {
+    S.litHouses++; S.fly = null;
+    let shown = 0; const step = Math.max(1, Math.round(donation / 12));
+    const iv = setInterval(() => { shown = Math.min(donation, shown + step); S.coins += Math.min(step, donation - (shown - step)); $('st-coins').textContent = `${Math.round(S.coins)} ת׳`; SFX.coin(); if (shown >= donation) clearInterval(iv); }, 60);
+    S.coins -= 0; save();
+    setTimeout(() => {
+      S.coins = Math.round(S.coins); save(); status();
+      modal(`<h2>נתקבל!</h2>
+        <p>${p.name} מקבל על עצמו <b>${S.hanhaga.name}</b></p>
+        <div class="big-num">${S.level.name}</div>
+        <p>תרומה לבית חב"ד: <b>${donation} ת׳</b><br><span style="font-size:17px">תשובות שנגעו בו: ${S.correct} מתוך 3 · עוד בית בעיר נדלק</span></p>
+        ${S.fit < 1 ? '<p style="font-size:16px">ההנהגה לא הייתה הכי מתאימה לו, ולכן התרומה קטנה יותר.</p>' : ''}${arcText}
+        ${wasTutorial ? '<p style="font-size:17px">סיימתם את ההדרכה! מעכשיו ר׳ בערל שותק, ואתם מחליטים לבד.</p>' : ''}`,
+        [['ליהודי הבא', afterJew]]);
+    }, 900);
+  }, 1100);
 }
 
 function afterJew() {
   S.todayCount++;
-  if (!S.queue.length) S.queue = PEOPLE.map((p) => p.id);
   if (S.todayCount >= JEWS_PER_DAY) {
-    S.todayCount = 0; S.coins -= HOUSE_COST; save(); stats();
-    overlay(`<p><b>חשבון נפש · סוף יום ${S.day}</b></p><p>הוצאות הבית: ${HOUSE_COST} ת'. נשארו ${Math.round(S.coins)} ת'.</p>
-      <p>מחר בבוקר מוכר הספרים מגיע שוב: אפשר לקנות מושגים בכפתור +1 שעל כל כרטיס.</p>`, 'יום חדש', () => { S.day++; save(); nextJew(); });
+    S.todayCount = 0; S.coins -= HOUSE_COST; S.day++; save(); status();
+    modal(`<h2>חשבון נפש</h2><p>היום הסתיים. הוצאות הבית: ${HOUSE_COST} ת׳.<br>בעיר דולקים כבר <b>${S.litHouses}</b> בתים.</p>`, [['בוקר חדש', morning]]);
   } else { save(); nextJew(); }
 }
 
-// ===========================================================================
-// Refresh: tools, distance meter, map and heart
-// ===========================================================================
-function refresh() {
-  const building = S.phase === 'build';
-  $('btn-talk').disabled = !(building && S.path && S.path.s < S.path.L);
-  $('btn-simple').disabled = !building || S.simpleLeft <= 0;
-  $('simple-left').textContent = S.simpleLeft.toFixed(1);
-  $('btn-nigun').disabled = !((building && inTarget()) || S.phase === 'nigun');
-  $('btn-nigun').textContent = S.phase === 'nigun' ? '🎵 פעמה! (רווח)' : '🎵 ניגון';
-  $('btn-giveup').disabled = !building;
-  const dEl = $('dist');
-  if (S.hanhaga && (building || S.phase === 'nigun')) {
-    const d = dist(S.pos, S.hanhaga);
-    const lv = LEVELS.find((l) => d <= l.max);
-    dEl.textContent = lv ? `בתוך הסמל · רמה צפויה: ${lv.name}` : `מרחק מהסמל: ${d.toFixed(1)} (צריך פחות מ-${TARGET_R})`;
-    dEl.classList.toggle('ok', !!lv);
-  } else { dEl.textContent = ''; dEl.classList.remove('ok'); }
-  drawMap(); drawHeart(); guide();
+// The bookseller comes every morning (doc section 8 / 16): buy concepts here.
+function morning() {
+  const cards = CONCEPTS.map((c) => `<div class="card"><span class="big">${c.arrow}</span><span class="nm">${c.name}</span>
+    <span class="sub">יש לכם ${S.stock[c.id]}</span><button data-buy="${c.id}" ${S.coins < c.price ? 'disabled' : ''}>קנייה ${c.price} ת׳</button></div>`).join('');
+  modal(`<h2>בוקר טוב! ר׳ בערל מוכר הספרים בדלת</h2><p style="font-size:18px">"מה תיקח היום? כל מושג שקונים נכנס לארון." · יש לכם <b id="shop-coins">${Math.round(S.coins)}</b> ת׳</p>
+    <div class="shop">${cards}</div>`, [['פותחים את הדלת', nextJew]]);
+  $('sheet').querySelectorAll('[data-buy]').forEach((b) => {
+    b.onclick = () => {
+      const c = CONCEPTS.find((x) => x.id === b.dataset.buy);
+      if (S.coins < c.price) return;
+      S.coins -= c.price; S.stock[c.id]++; SFX.coin(); save(); status();
+      b.previousElementSibling.textContent = `יש לכם ${S.stock[c.id]}`;
+      $('shop-coins').textContent = Math.round(S.coins);
+      $('sheet').querySelectorAll('[data-buy]').forEach((x) => { x.disabled = S.coins < CONCEPTS.find((y) => y.id === x.dataset.buy).price; });
+    };
+  });
 }
 
-const map = $('map'), mg = map.getContext('2d');
-const U = map.width / (MAP_HALF * 2);
-const toPx = (p) => ({ x: map.width / 2 + p.x * U, y: map.height / 2 - p.y * U });
+// ===========================================================================
+// Main loop: smooth movement, holding, talking, drawing
+// ===========================================================================
+let last = performance.now(), T = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  if (S.holding) {
+    S.depth = Math.min(1, (now - S.holdStart) / 1000 / CONTEMPLATE_SECONDS);
+    const ring = document.querySelector(`#bar .card[data-id="${S.holding.id}"] .ring`);
+    if (ring) ring.style.boxShadow = `inset 0 -${Math.round(S.depth * 104)}px 0 rgba(201,150,46,.35)`;
+  }
+  if (S.talking && S.phase === 'build') {
+    advance(dt * TALK_TURNS_PER_SEC);
+    murmurT -= dt; if (murmurT <= 0) { SFX.murmur(); murmurT = 0.35; }
+    if (!S.path || S.path.s >= S.path.L) S.talking = false;
+  }
+  if (S.simpling && S.phase === 'build' && S.simpleLeft > 0) {
+    S.simpleLeft = Math.max(0, S.simpleLeft - dt);
+    const d = Math.hypot(S.pos.x, S.pos.y);
+    if (d > 0.01) { const k = Math.min(d, SIMPLE_SPEED * dt) / d; S.pos = { x: S.pos.x * (1 - k), y: S.pos.y * (1 - k) }; S.trail.push({ ...S.pos }); light(S.pos); }
+    if (S.simpleLeft <= 0) S.simpling = false;
+  }
+  // warning hum when the candle is near a breaking klipa
+  if (S.phase === 'build') {
+    const near = KLIPOT.some((k) => k.kind === 'break' && dist(S.pos, k) < k.r + 0.8);
+    nearT -= dt; if (near && nearT <= 0) { SFX.near(); nearT = 0.5; }
+  }
+  tickNigun();
+  // the drawn candle glides after the real position
+  const g = Math.min(1, dt * 14);
+  S.shown = { x: S.shown.x + (S.pos.x - S.shown.x) * g, y: S.shown.y + (S.pos.y - S.shown.y) * g };
+  S.shake = Math.max(0, S.shake - dt * 2);
+  S.heartPulse = Math.max(0, (S.heartPulse || 0) - dt * 2);
+  if (S.fly) S.fly.t = Math.min(1, S.fly.t + dt / 1.0);
+  S.enter = Math.min(1, (S.enter || 0) + dt * 2);
+  updateBuild();
+  drawScene(); drawMap();
+  requestAnimationFrame(loop);
+}
 
+// ===========================================================================
+// Drawing: the room, the Jew, the town
+// ===========================================================================
+const sc = $('scene').getContext('2d');
+function houseSpot(i) { return { x: 40 + i * 88 + 38, y: 66 }; }
+function mapToStage(p) { const q = toPx(p); return { x: 700 + q.x, y: 118 + q.y }; }
+
+function drawScene() {
+  const g = sc;
+  g.save();
+  if (S.shake) g.translate((Math.random() - 0.5) * 12 * S.shake, (Math.random() - 0.5) * 8 * S.shake);
+  // night sky + town strip
+  const sky = g.createLinearGradient(0, 0, 0, 110); sky.addColorStop(0, '#141a33'); sky.addColorStop(1, '#2e3657');
+  g.fillStyle = sky; g.fillRect(0, 0, 1280, 110);
+  for (let i = 0; i < 40; i++) { const x = (i * 97) % 1280, y = (i * 53) % 60 + 6; g.fillStyle = `rgba(255,255,230,${0.3 + 0.3 * Math.sin(T * 2 + i)})`; g.fillRect(x, y, 2, 2); }
+  for (let i = 0; i < CITY_HOUSES; i++) {
+    const x = 40 + i * 88, h = 44 + ((i * 37) % 30), lit = i < S.litHouses;
+    g.fillStyle = '#1b1f2e'; g.fillRect(x, 110 - h, 76, h);
+    g.beginPath(); g.moveTo(x - 4, 110 - h); g.lineTo(x + 38, 110 - h - 22); g.lineTo(x + 80, 110 - h); g.fill();
+    for (let w = 0; w < 2; w++) {
+      g.fillStyle = lit ? `rgba(255, ${200 + 20 * Math.sin(T * 3 + i)}, 110, 0.95)` : '#2a2f40';
+      g.fillRect(x + 12 + w * 34, 110 - h + 12, 18, 16);
+      if (lit) { g.fillStyle = 'rgba(255,210,120,0.18)'; g.beginPath(); g.arc(x + 21 + w * 34, 110 - h + 20, 22, 0, Math.PI * 2); g.fill(); }
+    }
+  }
+  // room wall
+  const wall = g.createLinearGradient(0, 110, 0, 600); wall.addColorStop(0, '#c9a36a'); wall.addColorStop(1, '#a87f48');
+  g.fillStyle = wall; g.fillRect(0, 110, 1280, 490);
+  g.fillStyle = 'rgba(80, 50, 20, 0.08)';
+  for (let y = 130; y < 600; y += 36) for (let x = (y / 36) % 2 ? 0 : 40; x < 1280; x += 80) g.fillRect(x, y, 76, 32);
+  // window (left) with the night outside
+  g.fillStyle = '#5a3a1a'; g.fillRect(30, 230, 96, 130); g.fillStyle = '#26304e'; g.fillRect(38, 238, 80, 114);
+  g.fillStyle = '#5a3a1a'; g.fillRect(76, 238, 4, 114); g.fillRect(38, 293, 80, 4);
+  g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(102, 262, 8, 0, Math.PI * 2); g.fill();
+  // bookshelf behind the table
+  g.fillStyle = '#5a3a1a'; g.fillRect(30, 380, 96, 210);
+  const colors = ['#7b2d26', '#2f4a6b', '#5d6b3a', '#8a5a2b', '#4a2f55'];
+  for (let r = 0; r < 3; r++) { g.fillStyle = '#3d2610'; g.fillRect(30, 440 + r * 60, 96, 6); for (let b = 0; b < 7; b++) { g.fillStyle = colors[(b + r) % 5]; g.fillRect(36 + b * 12, 398 + r * 60, 10, 42); } }
+  // the table under the map
+  g.fillStyle = '#6b4524'; g.fillRect(660, 560, 600, 40); g.fillStyle = '#4a2f17'; g.fillRect(660, 596, 600, 6);
+  // floor
+  g.fillStyle = '#5a3a1e'; g.fillRect(0, 600, 1280, 120);
+  drawJew(g);
+  // heart in the corner of the table: pulses when a concept goes in
+  drawHeart(g, 640, 540);
+  // flying flame to the town
+  if (S.fly) {
+    const t = S.fly.t, e = t * t * (3 - 2 * t);
+    const x = S.fly.from.x + (S.fly.to.x - S.fly.from.x) * e, y = S.fly.from.y + (S.fly.to.y - S.fly.from.y) * e - Math.sin(Math.PI * t) * 120;
+    flame(g, x, y, 1.6);
+  }
+  g.restore();
+}
+
+function drawHeart(g, x, y) {
+  const s = 1 + (S.heartPulse || 0) * 0.35 + (S.talking ? Math.sin(T * 12) * 0.05 : 0);
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.beginPath(); g.moveTo(0, 18); g.bezierCurveTo(-28, 0, -21, -25, 0, -11); g.bezierCurveTo(21, -25, 28, 0, 0, 18);
+  g.fillStyle = '#b03a2e'; g.fill(); g.strokeStyle = '#4a120c'; g.lineWidth = 2; g.stroke();
+  g.restore();
+  if (S.phase === 'build') { g.font = 'bold 15px "Frank Ruhl Libre", serif'; g.textAlign = 'center'; g.fillStyle = '#3d2610'; g.fillText(`${S.used}/${MAX_CONCEPTS}`, x, y + 40); }
+}
+
+function flame(g, x, y, k = 1) {
+  const fl = 1 + Math.sin(T * 18) * 0.08 + Math.sin(T * 31) * 0.05;
+  const glow = g.createRadialGradient(x, y, 1, x, y, 26 * k);
+  glow.addColorStop(0, 'rgba(255, 220, 120, 0.9)'); glow.addColorStop(1, 'rgba(255, 220, 120, 0)');
+  g.fillStyle = glow; g.beginPath(); g.arc(x, y, 26 * k, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.moveTo(x, y - 14 * k * fl); g.quadraticCurveTo(x + 7 * k, y - 2 * k, x, y + 4 * k); g.quadraticCurveTo(x - 7 * k, y - 2 * k, x, y - 14 * k * fl);
+  g.fillStyle = '#ffb030'; g.fill();
+  g.beginPath(); g.moveTo(x, y - 7 * k * fl); g.quadraticCurveTo(x + 3 * k, y, x, y + 3 * k); g.quadraticCurveTo(x - 3 * k, y, x, y - 7 * k * fl);
+  g.fillStyle = '#fff4c0'; g.fill();
+}
+
+// A simple painted figure: coat, head, hat, beard; the mood changes the face and pose.
+function drawJew(g) {
+  const p = S.person; if (!p) return;
+  const L = p.look, e = S.enter || 0;
+  const x = 500 - (1 - e) * 300, base = 600, bob = Math.sin(T * 2) * 2;
+  g.save(); g.translate(x, base + bob); g.globalAlpha = e;
+  // shadow
+  g.fillStyle = 'rgba(0,0,0,0.25)'; g.beginPath(); g.ellipse(0, 0, 70, 12, 0, 0, Math.PI * 2); g.fill();
+  // legs
+  g.fillStyle = '#2b2620'; g.fillRect(-30, -90, 24, 90); g.fillRect(6, -90, 24, 90);
+  // coat
+  g.fillStyle = L.coat; g.beginPath(); g.moveTo(-58, -90); g.lineTo(-48, -250); g.quadraticCurveTo(0, -272, 48, -250); g.lineTo(58, -90); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 3; g.stroke();
+  if (L.apron) { g.fillStyle = '#eee3c8'; g.fillRect(-34, -210, 68, 118); }
+  // arms (raised when happy, crossed when doubtful)
+  g.strokeStyle = L.coat; g.lineWidth = 22; g.lineCap = 'round';
+  const happy = S.mood === 'happy', doubt = S.mood === 'doubt' || S.mood === 'sad';
+  g.beginPath();
+  if (happy) { g.moveTo(-46, -236); g.lineTo(-82, -300 + Math.sin(T * 6) * 6); g.moveTo(46, -236); g.lineTo(82, -300 - Math.sin(T * 6) * 6); }
+  else if (doubt) { g.moveTo(-46, -236); g.lineTo(18, -176); g.moveTo(46, -236); g.lineTo(-18, -168); }
+  else { g.moveTo(-46, -236); g.lineTo(-62, -140); g.moveTo(46, -236); g.lineTo(62, -140); }
+  g.stroke();
+  // head
+  const skin = '#e7b98c';
+  g.fillStyle = skin; g.beginPath(); g.arc(0, -300, 40, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 2; g.stroke();
+  const hair = L.grey ? '#b8b3a8' : '#3a2a1a';
+  if (L.beard) { g.fillStyle = hair; g.beginPath(); g.moveTo(-36, -296); g.quadraticCurveTo(0, -226, 36, -296); g.quadraticCurveTo(0, -272, -36, -296); g.fill(); }
+  // eyes and mouth
+  g.fillStyle = '#2a1d10';
+  g.beginPath(); g.arc(-14, -306, 4, 0, Math.PI * 2); g.arc(14, -306, 4, 0, Math.PI * 2); g.fill();
+  if (L.glasses) { g.strokeStyle = '#2a1d10'; g.lineWidth = 2; g.beginPath(); g.arc(-14, -306, 10, 0, Math.PI * 2); g.moveTo(24, -306); g.arc(14, -306, 10, 0, Math.PI * 2); g.moveTo(-4, -306); g.lineTo(4, -306); g.stroke(); }
+  g.strokeStyle = '#5a2a1a'; g.lineWidth = 3; g.beginPath();
+  if (happy) g.arc(0, -290, 13, 0.15 * Math.PI, 0.85 * Math.PI);
+  else if (doubt) g.arc(0, -276, 11, 1.2 * Math.PI, 1.8 * Math.PI);
+  else { g.moveTo(-9, -284); g.lineTo(9, -284); }
+  g.stroke();
+  // hat
+  g.fillStyle = L.hat === 'fedora' ? '#1b1b1b' : L.hat === 'cap' ? '#7a2e24' : L.hat === 'beret' ? '#5d6b3a' : hair;
+  g.beginPath();
+  if (L.hat === 'fedora') { g.ellipse(0, -334, 56, 9, 0, 0, Math.PI * 2); g.fill(); g.fillRect(-30, -372, 60, 38); }
+  else if (L.hat === 'cap') { g.arc(0, -318, 38, Math.PI, 0); g.fill(); g.fillRect(-4, -326, 54, 8); }
+  else if (L.hat === 'beret') { g.ellipse(-6, -334, 44, 14, -0.15, 0, Math.PI * 2); g.fill(); }
+  else { g.arc(0, -312, 40, Math.PI * 1.05, Math.PI * 1.95); g.lineTo(0, -320); g.fill(); }
+  g.restore();
+}
+
+// ===========================================================================
+// Drawing: the map (a parchment on the table)
+// ===========================================================================
+const map = $('map'), mg = map.getContext('2d');
+const U = 470 / (MAP_HALF * 2), OX = 250, OY = 235;
+const toPx = (p) => ({ x: OX + p.x * U, y: OY - p.y * U });
 function light(p) {
   for (let x = Math.floor(p.x - 2); x <= Math.ceil(p.x + 2); x++)
     for (let y = Math.floor(p.y - 2); y <= Math.ceil(p.y + 2); y++)
@@ -719,146 +765,150 @@ function pathPoints(origin, c, L, from = 0, to = L) {
   const o = c.shape(to, L); pts.push({ x: origin.x + o.x, y: origin.y + o.y });
   return pts;
 }
-function strokePts(pts, style, width, dash = []) {
+function stroke(pts, style, width, dash = [], off = 0) {
   if (pts.length < 2) return;
-  mg.beginPath(); mg.setLineDash(dash); mg.strokeStyle = style; mg.lineWidth = width; mg.lineJoin = 'round'; mg.lineCap = 'round';
+  mg.beginPath(); mg.setLineDash(dash); mg.lineDashOffset = off; mg.strokeStyle = style; mg.lineWidth = width; mg.lineJoin = 'round'; mg.lineCap = 'round';
   pts.forEach((p, i) => { const q = toPx(p); i ? mg.lineTo(q.x, q.y) : mg.moveTo(q.x, q.y); });
   mg.stroke(); mg.setLineDash([]);
 }
-function label(t, x, y, color, size, bold = true) {
-  mg.font = `${bold ? 'bold ' : ''}${size}px "Frank Ruhl Libre", Georgia, serif`; mg.textAlign = 'center'; mg.direction = 'rtl'; mg.fillStyle = color; mg.fillText(t, x, y);
-}
-function drawCandle(p) {
-  const glow = mg.createRadialGradient(p.x, p.y, 2, p.x, p.y, 18);
-  glow.addColorStop(0, 'rgba(255, 214, 110, 0.95)'); glow.addColorStop(1, 'rgba(255, 214, 110, 0)');
-  mg.fillStyle = glow; mg.beginPath(); mg.arc(p.x, p.y, 18, 0, Math.PI * 2); mg.fill();
-  mg.fillStyle = '#f4ead0'; mg.strokeStyle = '#2a1d10'; mg.lineWidth = 1.2;
-  mg.fillRect(p.x - 3, p.y - 1, 6, 9); mg.strokeRect(p.x - 3, p.y - 1, 6, 9);
-  mg.beginPath(); mg.moveTo(p.x, p.y - 11); mg.quadraticCurveTo(p.x + 5, p.y - 3, p.x, p.y - 1); mg.quadraticCurveTo(p.x - 5, p.y - 3, p.x, p.y - 11);
-  mg.fillStyle = '#f0a030'; mg.fill(); mg.stroke();
+function text(t, x, y, color, size, weight = 900) {
+  mg.font = `${weight} ${size}px "Frank Ruhl Libre", Georgia, serif`; mg.textAlign = 'center'; mg.direction = 'rtl'; mg.fillStyle = color; mg.fillText(t, x, y);
 }
 
 function drawMap() {
-  mg.fillStyle = '#e9dcbc'; mg.fillRect(0, 0, map.width, map.height);
+  const W = map.width, H = map.height;
+  mg.clearRect(0, 0, W, H);
+  // parchment with darker, uneven edges
+  mg.save();
+  mg.beginPath();
+  for (let i = 0; i <= 40; i++) { const t = i / 40; mg.lineTo(6 + t * (W - 12), 6 + Math.sin(i * 1.7) * 3); }
+  for (let i = 0; i <= 40; i++) { const t = i / 40; mg.lineTo(W - 6 + Math.sin(i * 2.3) * 3, 6 + t * (H - 12)); }
+  for (let i = 0; i <= 40; i++) { const t = i / 40; mg.lineTo(W - 6 - t * (W - 12), H - 6 + Math.sin(i * 1.3) * 3); }
+  for (let i = 0; i <= 40; i++) { const t = i / 40; mg.lineTo(6 + Math.sin(i * 1.9) * 3, H - 6 - t * (H - 12)); }
+  mg.closePath();
+  const par = mg.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, W * 0.75);
+  par.addColorStop(0, '#f1e2bb'); par.addColorStop(1, '#bf9c62');
+  mg.fillStyle = par; mg.shadowColor = 'rgba(0,0,0,0.45)'; mg.shadowBlur = 14; mg.shadowOffsetY = 6; mg.fill();
+  mg.restore();
+  mg.save(); mg.clip(); // keep everything inside the parchment shape (re-uses the last path)
+  // unexplored = hidden in a soft grey; explored = warm gold light
   for (let x = -MAP_HALF; x < MAP_HALF; x++) for (let y = -MAP_HALF; y < MAP_HALF; y++) {
-    const p = toPx({ x, y: y + 1 });
-    mg.fillStyle = S.lit.has(`${x},${y}`) ? 'rgba(243, 210, 122, 0.4)' : 'rgba(90, 80, 70, 0.26)';
-    mg.fillRect(p.x, p.y, U, U);
+    const q = toPx({ x, y: y + 1 });
+    if (S.lit.has(`${x},${y}`)) { mg.fillStyle = 'rgba(255, 214, 120, 0.28)'; mg.fillRect(q.x, q.y, U + 0.5, U + 0.5); }
+    else { mg.fillStyle = 'rgba(70, 60, 50, 0.22)'; mg.fillRect(q.x, q.y, U + 0.5, U + 0.5); }
   }
-  mg.strokeStyle = 'rgba(107, 86, 56, 0.16)'; mg.lineWidth = 1;
-  for (let i = 0; i <= MAP_HALF * 2; i++) {
-    mg.beginPath(); mg.moveTo(i * U, 0); mg.lineTo(i * U, map.height); mg.stroke();
-    mg.beginPath(); mg.moveTo(0, i * U); mg.lineTo(map.width, i * U); mg.stroke();
-  }
+  // klipot: dark swirling blots
   for (const k of KLIPOT) {
-    const p = toPx(k);
-    mg.beginPath(); mg.arc(p.x, p.y, k.r * U, 0, Math.PI * 2);
-    mg.fillStyle = k.kind === 'break' ? 'rgba(44, 22, 22, 0.85)' : 'rgba(90, 74, 122, 0.6)'; mg.fill();
-    mg.strokeStyle = k.kind === 'break' ? '#9c3324' : '#5a4a7a'; mg.lineWidth = 2; mg.stroke();
-    label(k.name, p.x, p.y + 4, '#f3e9d0', 11);
+    const q = toPx(k), r = k.r * U, br = k.kind === 'break';
+    const gr = mg.createRadialGradient(q.x, q.y, 2, q.x, q.y, r * 1.25);
+    gr.addColorStop(0, br ? 'rgba(30, 8, 8, 0.95)' : 'rgba(60, 45, 90, 0.85)'); gr.addColorStop(0.75, br ? 'rgba(60, 15, 15, 0.8)' : 'rgba(80, 65, 110, 0.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    mg.fillStyle = gr; mg.beginPath(); mg.arc(q.x, q.y, r * 1.25, 0, Math.PI * 2); mg.fill();
+    mg.strokeStyle = br ? 'rgba(160, 40, 30, 0.8)' : 'rgba(120, 100, 160, 0.8)'; mg.lineWidth = 2; mg.setLineDash([4, 4]); mg.lineDashOffset = T * 8;
+    mg.beginPath(); mg.arc(q.x, q.y, r, 0, Math.PI * 2); mg.stroke(); mg.setLineDash([]);
+    text(k.name, q.x, q.y + 5, '#f3e6c4', 14);
   }
+  // hanhagot: gold seals with three rings (the levels)
+  const chosen = S.hanhaga, hov = S.phase === 'read' ? S.hoverH : null;
   for (const h of HANHAGOT) {
-    const p = toPx(h), chosen = S.hanhaga === h, dim = S.hanhaga && !chosen;
-    mg.globalAlpha = dim ? 0.45 : 1;
-    mg.beginPath(); mg.arc(p.x, p.y, TARGET_R * U, 0, Math.PI * 2);
-    mg.fillStyle = chosen ? 'rgba(201, 150, 46, 0.38)' : 'rgba(201, 150, 46, 0.16)'; mg.fill();
-    mg.strokeStyle = chosen ? '#c9962e' : 'rgba(138, 106, 58, 0.7)'; mg.lineWidth = chosen ? 3 : 1.5; mg.stroke();
-    for (const r of [0.7, 0.3]) { mg.beginPath(); mg.arc(p.x, p.y, r * U, 0, Math.PI * 2); mg.strokeStyle = 'rgba(138, 106, 58, 0.5)'; mg.lineWidth = 1; mg.stroke(); }
-    label(h.mark, p.x, p.y + 6, chosen ? '#9c3324' : '#6b5638', 16);
-    label(h.name, p.x, p.y - TARGET_R * U - 5, '#2a1d10', 12);
+    const q = toPx(h), on = chosen === h || hov === h;
+    mg.globalAlpha = chosen && chosen !== h ? 0.3 : 1;
+    const pulse = on ? 1 + Math.sin(T * 4) * 0.06 : 1;
+    mg.beginPath(); mg.arc(q.x, q.y, TARGET_R * U * pulse, 0, Math.PI * 2);
+    mg.fillStyle = on ? 'rgba(232, 180, 70, 0.45)' : 'rgba(201, 150, 46, 0.18)'; mg.fill();
+    mg.strokeStyle = on ? '#b07b1c' : 'rgba(138, 106, 58, 0.7)'; mg.lineWidth = on ? 3 : 1.5; mg.stroke();
+    for (const r of [0.75, 0.35]) { mg.beginPath(); mg.arc(q.x, q.y, r * U, 0, Math.PI * 2); mg.strokeStyle = 'rgba(120, 85, 30, 0.45)'; mg.lineWidth = 1; mg.stroke(); }
+    text(h.mark, q.x, q.y + 7, on ? '#7a2010' : '#6b5638', 20);
+    text(h.name, q.x, q.y - TARGET_R * U - 6, '#3d2610', 15);
     mg.globalAlpha = 1;
   }
+  // the Jewish point at the center
   const c = toPx({ x: 0, y: 0 });
-  label('✦', c.x, c.y + 7, '#c9962e', 20, false);
-  if (S.start) { const s = toPx(S.start); mg.beginPath(); mg.arc(s.x, s.y, 5, 0, Math.PI * 2); mg.strokeStyle = '#6b5638'; mg.lineWidth = 2; mg.stroke(); }
-  strokePts(S.trail, '#7a5220', 3);
-  if (S.path && S.path.s < S.path.L) strokePts(pathPoints(S.path.origin, S.path.concept, S.path.L, S.path.s), '#2a1d10', 2.2, [6, 4]);
-  // preview: the concept under the mouse (or being contemplated). Faint = longest possible, red = current length.
-  const cc = (S.ready && S.ready.concept) || S.hover;
-  if (S.phase === 'build' && cc && !(S.path && S.path.s < S.path.L && !S.ready)) {
+  mg.fillStyle = `rgba(255, 220, 120, ${0.35 + Math.sin(T * 2) * 0.1})`; mg.beginPath(); mg.arc(c.x, c.y, 12, 0, Math.PI * 2); mg.fill();
+  text('✦', c.x, c.y + 7, '#a8741a', 20, 400);
+  // where he started
+  if (S.start && S.phase !== 'intro') { const s = toPx(S.start); mg.strokeStyle = 'rgba(90, 60, 30, 0.6)'; mg.lineWidth = 2; mg.beginPath(); mg.arc(s.x, s.y, 6, 0, Math.PI * 2); mg.stroke(); }
+  // the road travelled: a glowing gold line
+  mg.shadowColor = 'rgba(255, 200, 80, 0.8)'; mg.shadowBlur = 8;
+  stroke(S.trail, '#c98a1c', 4);
+  mg.shadowBlur = 0;
+  // the rest of the current line
+  if (S.path && S.path.s < S.path.L) stroke(pathPoints(S.path.origin, S.path.concept, S.path.L, S.path.s), '#3d2610', 2.5, [7, 6], -T * 20);
+  // preview: the concept under the mouse or being held
+  const cc = S.holding || (S.phase === 'build' ? S.hover : null);
+  if (S.phase === 'build' && cc) {
     const origin = nextOrigin();
-    const depth = S.ready && S.ready.concept === cc ? S.depth : 0;
-    strokePts(pathPoints(origin, cc, cc.len[1]), 'rgba(42, 29, 16, 0.35)', 1.6, [3, 4]);
-    const pts = pathPoints(origin, cc, lenOf(cc, depth));
-    strokePts(pts, '#9c3324', 3, [7, 3]);
-    const end = toPx(pts[pts.length - 1]); mg.beginPath(); mg.arc(end.x, end.y, 4, 0, Math.PI * 2); mg.fillStyle = '#9c3324'; mg.fill();
-    // warn if the preview crosses a breaking klipa
+    const L = S.holding ? lenOf(cc, S.depth) : cc.len[0];
+    stroke(pathPoints(origin, cc, cc.len[1]), 'rgba(61, 38, 16, 0.3)', 2, [3, 5]);
+    const pts = pathPoints(origin, cc, L);
     const bad = KLIPOT.find((k) => k.kind === 'break' && !(cc.immune || []).includes(k.id) && pts.some((q) => dist(q, k) < k.r));
-    if (bad) label(`⚠ עובר דרך "${bad.name}"`, end.x, end.y - 10, '#9c3324', 12);
+    stroke(pts, bad ? '#c0281c' : '#8a2a14', 3.5, [9, 4], -T * 25);
+    const end = toPx(pts[pts.length - 1]);
+    mg.beginPath(); mg.arc(end.x, end.y, 6, 0, Math.PI * 2); mg.fillStyle = bad ? '#c0281c' : '#8a2a14'; mg.fill();
+    if (bad) text(`⚠ ${bad.name}!`, end.x, end.y - 12, '#c0281c', 16);
+    else if (S.hanhaga && dist(pts[pts.length - 1], S.hanhaga) <= TARGET_R) text('✓', end.x, end.y - 10, '#2f6a2a', 20);
   }
-  drawCandle(toPx(S.pos));
+  // nigun: four drums around the candle
+  if (S.phase === 'nigun' && S.nigun) {
+    const n = S.nigun, t = performance.now() / 1000 - n.t0, q = toPx(S.shown);
+    for (let i = 0; i < 4; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 2, x = q.x + Math.cos(a) * 58, y = q.y + Math.sin(a) * 58;
+      const near = Math.abs(t - i * BEAT) < WINDOW;
+      mg.beginPath(); mg.arc(x, y, near ? 20 : 13, 0, Math.PI * 2);
+      mg.fillStyle = n.hits[i] ? '#e0a21c' : near ? '#ffe08a' : t > i * BEAT + WINDOW ? 'rgba(90,70,40,.5)' : 'rgba(255,250,230,.8)';
+      mg.fill(); mg.strokeStyle = '#5a3e1e'; mg.lineWidth = 2; mg.stroke();
+    }
+    if (t < 0) text('מוכנים…', q.x, q.y - 80, '#3d2610', 20);
+  }
+  // the candle
+  const q = toPx(S.shown);
+  mg.fillStyle = '#f4ead0'; mg.strokeStyle = '#3d2610'; mg.lineWidth = 1.5;
+  mg.fillRect(q.x - 4, q.y + 2, 8, 13); mg.strokeRect(q.x - 4, q.y + 2, 8, 13);
+  flameOn(mg, q.x, q.y);
+  // distance hint while building: a thin gold thread to the target
+  if (S.phase === 'build' && S.hanhaga && !inTarget()) {
+    const h = toPx(S.hanhaga);
+    mg.strokeStyle = 'rgba(176, 123, 28, 0.25)'; mg.setLineDash([2, 6]); mg.lineWidth = 2; mg.beginPath(); mg.moveTo(q.x, q.y); mg.lineTo(h.x, h.y); mg.stroke(); mg.setLineDash([]);
+  }
+  mg.restore();
+}
+function flameOn(g, x, y) {
+  const fl = 1 + Math.sin(T * 18) * 0.1 + Math.sin(T * 29) * 0.06, glowR = inTarget() ? 30 : 22;
+  const glow = g.createRadialGradient(x, y, 1, x, y, glowR);
+  glow.addColorStop(0, inTarget() ? 'rgba(255, 230, 140, 0.95)' : 'rgba(255, 210, 110, 0.8)'); glow.addColorStop(1, 'rgba(255, 210, 110, 0)');
+  g.fillStyle = glow; g.beginPath(); g.arc(x, y, glowR, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.moveTo(x, y - 14 * fl); g.quadraticCurveTo(x + 6, y - 3, x, y + 2); g.quadraticCurveTo(x - 6, y - 3, x, y - 14 * fl);
+  g.fillStyle = '#ff9f1c'; g.fill();
+  g.beginPath(); g.moveTo(x, y - 7 * fl); g.quadraticCurveTo(x + 2.5, y - 1, x, y + 1); g.quadraticCurveTo(x - 2.5, y - 1, x, y - 7 * fl);
+  g.fillStyle = '#fff4c0'; g.fill();
 }
 
-const heart = $('heart'), hg = heart.getContext('2d');
-let spin = 0;
-function drawHeart() {
-  const w = heart.width, h = heart.height;
-  hg.clearRect(0, 0, w, h);
-  const talking = S.path && S.path.s < S.path.L && S.phase === 'build';
-  hg.save(); hg.translate(w / 2, h / 2 - 8);
-  hg.beginPath(); hg.arc(0, 0, 88, 0, Math.PI * 2); hg.strokeStyle = talking ? '#c9962e' : 'rgba(138, 106, 58, 0.35)';
-  hg.setLineDash([5, 7]); hg.lineDashOffset = -spin * 20; hg.lineWidth = talking ? 3 : 2; hg.stroke(); hg.setLineDash([]);
-  // heart shape
-  hg.scale(1.6, 1.6);
-  hg.beginPath(); hg.moveTo(0, 22); hg.bezierCurveTo(-34, 0, -26, -30, 0, -14); hg.bezierCurveTo(26, -30, 34, 0, 0, 22);
-  hg.fillStyle = S.ready ? '#c8473a' : '#b03a2e'; hg.globalAlpha = S.phase === 'build' ? 1 : 0.45; hg.fill();
-  hg.strokeStyle = '#5a1a12'; hg.lineWidth = 1.5; hg.stroke();
-  hg.restore();
-  hg.font = 'bold 13px "Frank Ruhl Libre", Georgia, serif'; hg.textAlign = 'center'; hg.direction = 'rtl'; hg.fillStyle = '#2a1d10';
-  const msg = S.ready ? `לחצו כאן: להכניס "${S.ready.concept.name}"` : talking ? `שיחה: ${S.path.concept.name} ${(S.path.s / S.path.L * 100).toFixed(0)}%` : `${S.used}/${MAX_CONCEPTS} מושגים במענה`;
-  hg.fillText(msg, w / 2, h - 6);
-}
-
-// Circling the mouse around the heart also talks (the doc's original control).
-let lastAngle = null;
-heart.addEventListener('pointerdown', () => { if (S.ready) insertConcept(); });
-heart.addEventListener('pointermove', (e) => {
-  const r = heart.getBoundingClientRect();
-  const a = Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2);
-  if (lastAngle !== null && S.path && S.path.s < S.path.L) {
-    let d = a - lastAngle; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2;
-    spin += d; advance(Math.abs(d) / (Math.PI * 2));
-  }
-  lastAngle = a;
-});
-heart.addEventListener('pointerleave', () => { lastAngle = null; });
-
-const hold = (id, start, stop) => {
-  const b = $(id);
-  b.addEventListener('pointerdown', start);
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, stop);
-};
-hold('btn-talk', startTalk, stopTalk);
-hold('btn-simple', startSimple, stopSimple);
-$('btn-nigun').addEventListener('click', () => (S.phase === 'nigun' ? nigunPress() : startNigun()));
-$('btn-giveup').addEventListener('click', giveUp);
+// ===========================================================================
+// Input, scaling, start
+// ===========================================================================
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' && S.phase === 'nigun') { e.preventDefault(); nigunPress(); }
+  if (e.code !== 'Space' || e.repeat) return;
+  e.preventDefault();
+  if (S.phase === 'nigun') nigunPress();
+  else if (S.phase === 'build' && S.path && S.path.s < S.path.L) S.talking = true;
 });
+window.addEventListener('keyup', (e) => { if (e.code === 'Space') S.talking = false; });
+$('btn-sound').onclick = () => { S.sound = !S.sound; save(); status(); };
+function fit() { const k = Math.min(window.innerWidth / 1280, window.innerHeight / 720); $('stage').style.transform = `scale(${k})`; }
+window.addEventListener('resize', fit); fit();
 
-// For automated checks from the console.
-window.Y = { S, CONCEPTS, HANHAGOT, KLIPOT, PEOPLE, chooseHanhaga, insertConcept, advance, startNigun, nigunPress, lenOf, startContemplate, answer, nextJew };
+window.Y = { S, CONCEPTS, HANHAGOT, KLIPOT, PEOPLE, chooseHanhaga, insertConcept, advance, startNigun, nigunPress, answer, nextJew, lenOf, morning };
 
-// ===========================================================================
-// Start
-// ===========================================================================
 const hadSave = load();
-stats(); drawMap(); drawHeart();
+status();
+requestAnimationFrame(loop);
 if (hadSave && S.tutorialDone) {
-  overlay(`<p><b>ברוכים השבים לבית חב"ד</b></p><p>יום ${S.day} · ${Math.round(S.coins)} ת' · אמון ${S.trust.toFixed(1)}</p>
-    <button id="btn-reset" style="margin-inline-end:8px">להתחיל מחדש</button>`, 'חזרה לבית חב"ד', nextJew);
-  $('btn-reset').onclick = () => { try { localStorage.removeItem(SAVE_KEY); } catch {} location.reload(); };
+  modal(`<h1>יפוצו</h1><p>ברוכים השבים לבית חב"ד.<br>יום ${S.day} · ${Math.round(S.coins)} ת׳ · ${S.litHouses} בתים דולקים בעיר</p>`,
+    [['חזרה לבית חב"ד', nextJew], ['להתחיל מחדש', () => { try { localStorage.removeItem(SAVE_KEY); } catch {} location.reload(); }, true]]);
 } else {
-  overlay(`<p><b>יפוצו</b></p>
-    <p>אתם שליח צעיר שפתח בית חב"ד. יהודים נכנסים עם שאלות, ואתם מרכיבים לכל אחד מענה על <b>מפת הנפש</b>.</p>
-    <ol>
-      <li>קוראים מה הוא אומר, ובוחרים הנהגה שמתאימה לו.</li>
-      <li>בוחרים מושג מהארון. כל מושג מזיז את הנר 🕯 בכיוון אחר.</li>
-      <li>מכניסים אותו ללב, ומדברים: הנר זז על המפה.</li>
-      <li>כשהנר בתוך הסמל של ההנהגה: מנגנים ניגון.</li>
-      <li>עונים לשאלות שלו בסגנון שנוגע בו.</li>
-    </ol>
-    <p class="small">היהודי הראשון הוא דוד, ור׳ בערל מוכר הספרים יסביר כל צעד.</p>`, 'פתיחת שליחות', nextJew);
+  modal(`<h1>יפוצו</h1>
+    <p>אתם שליח צעיר שפתח בית חב"ד בעיר חשוכה.<br>כל יהודי שנכנס מקבל ממכם מענה, וכל מענה מדליק עוד בית בעיר.</p>
+    <p style="font-size:18px">על השולחן מונחת <b>מפת הנפש</b>. מובילים בה את הנר אל ההנהגה שמתאימה ליהודי, בעזרת מושגים מהארון.</p>
+    <p style="font-size:17px">ר׳ בערל מוכר הספרים יעזור לכם עם היהודי הראשון.</p>`, [['פתיחת שליחות', nextJew]]);
 }
 </script>
 </body>
